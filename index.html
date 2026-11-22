@@ -99,7 +99,6 @@
   <div class="sheet">
     <b>Scan with your wallet</b>
     <div class="sub">Any WalletConnect wallet: Trust, TokenPocket, MathWallet, OKX…</div>
-    <div class="note" style="margin:0 0 10px">Bybit mobile doesn’t support Tron dApps — use Trust or TronLink here. Bybit desktop extension works via “Connect wallet”.</div>
     <canvas id="qr"></canvas>
     <div class="wallets" id="deeplinks"></div>
     <button class="ghost" id="wc-copy">Copy connection link</button>
@@ -250,7 +249,6 @@ function pickProvider() {
   const w = window;
   const c = [
     w.tronLink,
-    w.bybitWallet && w.bybitWallet.tronLink,
     w.okxwallet && w.okxwallet.tronLink,
     w.tokenpocket && w.tokenpocket.tron,
     w.bitkeep && w.bitkeep.tron,
