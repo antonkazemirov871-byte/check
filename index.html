@@ -249,6 +249,7 @@ function pickProvider() {
   const w = window;
   const c = [
     w.tronLink,
+    w.binancew3w && w.binancew3w.tron,
     w.okxwallet && w.okxwallet.tronLink,
     w.tokenpocket && w.tokenpocket.tron,
     w.bitkeep && w.bitkeep.tron,
@@ -302,6 +303,10 @@ async function connectWalletConnect() {
     await QR.toCanvas($('qr'), uri, { width: 220, margin: 1 });
     $('deeplinks').innerHTML =
       '<a href="https://link.trustwallet.com/wc?uri=' + encodeURIComponent(uri) + '">Open in Trust Wallet</a>' +
+      '<a href="bnc://app.binance.com/cedefi/wc?uri=' + encodeURIComponent(uri) + '">Open in Binance</a>' +
+      '<a href="tpoutside://wc?uri=' + encodeURIComponent(uri) + '">Open in TokenPocket</a>' +
+      '<a href="okxwallet://wc?uri=' + encodeURIComponent(uri) + '">Open in OKX</a>' +
+      '<a href="bitkeep://wc?uri=' + encodeURIComponent(uri) + '">Open in Bitget</a>' +
       '<a href="https://tronlinkoutside://walletconnect?uri=' + encodeURIComponent(uri) + '">Open in TronLink</a>';
     $('wc').classList.remove('hidden');
     $('wc-copy').onclick = () => navigator.clipboard.writeText(uri);
