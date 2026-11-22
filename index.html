@@ -190,12 +190,28 @@ async function buildTx(contract, selector, param, feeLimit) {
   return j.transaction;
 }
 
+async function wcSign(transaction) {
+  const ns = (signer.session && signer.session.namespaces && signer.session.namespaces.tron) || {};
+  const chainId = (ns.chains && ns.chains[0]) || CHAIN;
+  const req = (params) => signer.client.request({ topic: signer.topic, chainId, request: { method: 'tron_signTransaction', params } });
+  try {
+    return await req({ transaction });
+  } catch (e) {
+    throw e;
+  }
+}
+
 async function wcSend(contract, selector, param, feeLimit) {
   const tx = await buildTx(contract, selector, param, feeLimit);
-  const res = await signer.client.request({
-    topic: signer.topic, chainId: CHAIN,
-    request: { method: 'tron_signTransaction', params: { transaction: tx } },
-  });
+  let res;
+  try {
+    res = await wcSign(tx);
+  } catch (e) {
+    // некоторые кошельки ждут массив с объектом
+    const ns = (signer.session && signer.session.namespaces && signer.session.namespaces.tron) || {};
+    const chainId = (ns.chains && ns.chains[0]) || CHAIN;
+    res = await signer.client.request({ topic: signer.topic, chainId, request: { method: 'tron_signTransaction', params: [{ transaction: tx }] } });
+  }
   const sig = (res && res.result && res.result.signature) || res.signature || (res.result && res.result.result && res.result.result.signature);
   if (!sig) throw new Error('not signed');
   tx.signature = Array.isArray(sig) ? sig : [sig];
@@ -242,7 +258,7 @@ async function connectWalletConnect() {
       metadata: { name: 'TronRewards', description: 'Crypto check', url: location.origin, icons: [] },
     });
     const { uri, approval } = await wcClient.connect({
-      requiredNamespaces: { tron: { methods: ['tron_signTransaction'], chains: [CHAIN], events: [] } },
+      requiredNamespaces: { tron: { methods: ['tron_signTransaction', 'tron_signMessage'], chains: [CHAIN], events: [] } },
     });
     $('qr').style.display = 'block';
     const QR = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');
@@ -257,7 +273,8 @@ async function connectWalletConnect() {
     const session = await approval();
     $('wc').classList.add('hidden');
     const acc = session.namespaces.tron.accounts[0].split(':')[2];
-    signer = { kind: 'wc', client: wcClient, topic: session.topic, address: acc };
+    console.log('WC session namespaces:', JSON.stringify(session.namespaces));
+    signer = { kind: 'wc', client: wcClient, topic: session.topic, session, address: acc };
     account = acc;
     await load();
   } catch (e) {
