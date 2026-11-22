@@ -220,7 +220,10 @@ async function wcSend(contract, selector, param, feeLimit) {
   if (!sig) throw new Error('not signed');
   tx.signature = Array.isArray(sig) ? sig : [sig];
   const b = await rpc('/wallet/broadcasttransaction', tx);
-  if (b.result !== true) throw new Error((b.message && atob(b.message)) || b.code || 'broadcast failed');
+  if (b.result !== true) {
+    const chk = await rpc('/wallet/gettransactionbyid', { value: tx.txID });
+    if (!chk || !chk.txID) throw new Error((b.message && atob(b.message)) || b.code || 'broadcast failed');
+  }
   for (let i = 0; i < 30; i++) {
     const info = await rpc('/wallet/gettransactioninfobyid', { value: b.txid });
     if (info && info.receipt) return b.txid;
