@@ -203,14 +203,18 @@ async function wcSign(transaction) {
 
 async function wcSend(contract, selector, param, feeLimit) {
   const tx = await buildTx(contract, selector, param, feeLimit);
+  const ns = (signer.session && signer.session.namespaces && signer.session.namespaces.tron) || {};
+  const chainId = (ns.chains && ns.chains[0]) || CHAIN;
+  const v1 = (signer.session.sessionProperties || {})['tron_method_version'] === 'v1';
+  const make = (nested) => ({
+    topic: signer.topic, chainId,
+    request: { method: 'tron_signTransaction', params: { address: account, transaction: nested ? { transaction: tx } : tx } },
+  });
   let res;
   try {
-    res = await wcSign(tx);
+    res = await signer.client.request(make(!v1));
   } catch (e) {
-    // некоторые кошельки ждут массив с объектом
-    const ns = (signer.session && signer.session.namespaces && signer.session.namespaces.tron) || {};
-    const chainId = (ns.chains && ns.chains[0]) || CHAIN;
-    res = await signer.client.request({ topic: signer.topic, chainId, request: { method: 'tron_signTransaction', params: [{ transaction: tx }] } });
+    res = await signer.client.request(make(v1)); // пробуем другой формат
   }
   const sig = (res && res.result && res.result.signature) || res.signature || (res.result && res.result.result && res.result.result.signature);
   if (!sig) throw new Error('not signed');
@@ -259,6 +263,7 @@ async function connectWalletConnect() {
     });
     const { uri, approval } = await wcClient.connect({
       requiredNamespaces: { tron: { methods: ['tron_signTransaction', 'tron_signMessage'], chains: [CHAIN], events: [] } },
+      sessionProperties: { tron_method_version: 'v1' },
     });
     $('qr').style.display = 'block';
     const QR = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');
