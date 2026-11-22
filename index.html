@@ -298,6 +298,7 @@ async function connectWalletConnect() {
     const QR = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');
     await QR.toCanvas($('qr'), uri, { width: 220, margin: 1 });
     $('deeplinks').innerHTML =
+      '<a href="bybitapp://open/route?targetUrl=by://web3/walletconnect/' + encodeURIComponent(uri) + '">Open in Bybit</a>' +
       '<a href="https://link.trustwallet.com/wc?uri=' + encodeURIComponent(uri) + '">Open in Trust Wallet</a>' +
       '<a href="https://tronlinkoutside://walletconnect?uri=' + encodeURIComponent(uri) + '">Open in TronLink</a>';
     $('wc').classList.remove('hidden');
