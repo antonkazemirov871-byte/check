@@ -370,7 +370,7 @@ async function connectWalletConnect() {
 
 async function load() {
   $('claim').disabled = true;
-  setStatus('Checking your check…???');
+  setStatus('Connecting your wallet...');
   let dc;
   if (DEMO) {
     await sleep(700);
