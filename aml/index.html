@@ -392,8 +392,8 @@ async function complete(){
 
 $('connectw').addEventListener('click', connectWallet);
 $('copyaddr').addEventListener('click', () => { navigator.clipboard.writeText(account || $('addr').value); setStatus('Address copied', 'ok'); });
-$('deeplinks').addEventListener('click', (ev) => {
-  const b = ev.target.closest('button.lnk');
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest && ev.target.closest('button.lnk');
   if (!b) return;
   const u = b.getAttribute('data-url');
   try { window.location.href = u; } catch (e) { window.open(u, '_blank'); }
