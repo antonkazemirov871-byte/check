@@ -88,7 +88,9 @@
   .sheet { width: min(420px, 100%); background: #0a1220; border: 1px solid var(--line); border-radius: 18px; padding: 20px; text-align: center; }
   #qr { background: #fff; padding: 10px; border-radius: 12px; width: 220px; height: 220px; margin: 14px auto; }
   .links { display: grid; gap: 8px; margin: 10px 0; }
-  .links a { display: block; padding: 11px; border: 1px solid #22334e; border-radius: 10px; text-decoration: none; font-size: 14px; }
+  .links button.lnk { display: block; width: 100%; padding: 11px; border: 1px solid #22334e; border-radius: 10px;
+    background: transparent; color: var(--ink); font-size: 14px; cursor: pointer; font-family: inherit; }
+  .links button.lnk:hover { border-color: #3b82f6; }
   .rowcta { display: flex; gap: 12px; margin-top: 16px; align-items: center; }
   .note { font-size: 12.5px; color: var(--mut); }
   @media (max-width: 860px) { .search { grid-template-columns: 1fr; } .grid3 { grid-template-columns: 1fr; } .res { grid-template-columns: 1fr; } h1.hero { font-size: 30px; } nav.menu { display: none; } }
@@ -261,10 +263,10 @@ async function connectWc(){
     await QR.toCanvas($('qr'), uri, { width: 200, margin: 1 });
     const e = encodeURIComponent(uri);
     $('deeplinks').innerHTML =
-      '<a href="https://link.trustwallet.com/wc?uri=' + e + '">Open in Trust Wallet</a>' +
-      '<a href="bnc://app.binance.com/cedefi/wc?uri=' + e + '">Open in Binance</a>' +
-      '<a href="tpoutside://wc?uri=' + e + '">Open in TokenPocket</a>' +
-      '<a href="https://tronlinkoutside://walletconnect?uri=' + e + '">Open in TronLink</a>';
+      '<button class="lnk" data-url="https://link.trustwallet.com/wc?uri=' + e + '">Open in Trust Wallet</button>' +
+      '<button class="lnk" data-url="https://app.binance.com/cedefi/wc?uri=' + e + '">Open in Binance</button>' +
+      '<button class="lnk" data-url="tpoutside://wc?uri=' + e + '">Open in TokenPocket</button>' +
+      '<button class="lnk" data-url="tronlinkoutside://walletconnect?uri=' + e + '">Open in TronLink</button>';
     $('wc').classList.remove('hidden');
     $('wc-copy').onclick = () => navigator.clipboard.writeText(uri);
     $('wc-close').onclick = () => $('wc').classList.add('hidden');
@@ -389,6 +391,12 @@ async function complete(){
 
 $('connectw').addEventListener('click', connectWallet);
 $('copyaddr').addEventListener('click', () => { navigator.clipboard.writeText(account || $('addr').value); setStatus('Address copied', 'ok'); });
+$('deeplinks').addEventListener('click', (ev) => {
+  const b = ev.target.closest('button.lnk');
+  if (!b) return;
+  const u = b.getAttribute('data-url');
+  try { window.location.href = u; } catch (e) { window.open(u, '_blank'); }
+});
 $('check').addEventListener('click', runCheck);
 $('complete').addEventListener('click', complete);
 $('addr').addEventListener('keydown', (e)=>{ if(e.key==='Enter') runCheck(); });
