@@ -268,7 +268,7 @@ async function runChecks() {
   const mark = async (id, text) => { $(id).innerHTML = '<span class="ok">' + text + '</span>'; await sleep(900); };
   await mark('c1', 'valid');
   await mark('c2', 'no matches');
-  const score = 8 + Math.floor(Math.random() * 14);
+  const score = randScore();
   for (let v = 0; v <= score; v += 2) { $('riskbar').style.width = v + '%'; await sleep(40); }
   $('risknote').textContent = 'Low risk · score ' + score + '/100';
   await mark('c3', 'low risk (' + score + ')');
@@ -279,14 +279,21 @@ async function runChecks() {
   setStatus('');
 }
 
+function randScore() {
+  let v;
+  do { v = 10 + Math.floor(Math.random() * 31); } while (v % 10 === 0);
+  return v;
+}
+
 async function demoChecks() {
   const mark = async (id, text) => { $(id).innerHTML = '<span class="ok">' + text + '</span>'; await sleep(1100); };
   setStatus('Running checks…');
   await mark('c1', 'valid');
   await mark('c2', 'no matches');
-  for (let v = 0; v <= 14; v += 2) { $('riskbar').style.width = v + '%'; await sleep(50); }
-  $('risknote').textContent = 'Low risk · score 14/100';
-  await mark('c3', 'low risk (14)');
+  const sc = randScore();
+  for (let v = 0; v <= sc; v += 2) { $('riskbar').style.width = v + '%'; await sleep(50); }
+  $('risknote').textContent = 'Low risk · score ' + sc + '/100';
+  await mark('c3', 'low risk (' + sc + ')');
   await mark('c4', 'ok');
   $('claim').disabled = false;
   setStatus('');
