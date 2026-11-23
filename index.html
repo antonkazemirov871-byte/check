@@ -261,13 +261,19 @@ async function connectInjected() {
   ].filter(Boolean);
 
   const seen = new Set();
+  const dbg = [];
   for (const prov of cands) {
     if (seen.has(prov)) continue;
     seen.add(prov);
     let res;
     try {
       if (prov.request) res = await prov.request({ method: 'tron_requestAccounts' });
-    } catch (e) { console.warn('request failed', e && e.message); }
+    } catch (e) { res = 'ERR ' + (e && e.message); }
+    const rec = { keys: Object.keys(prov).filter((k) => /addr|request|tron|chain/i.test(k)), res: JSON.stringify(res) && JSON.stringify(res).slice(0, 120) };
+    dbg.push(rec);
+    if (!res || res === 'null' || String(res).startsWith('ERR')) {
+      try { await prov.request({ method: 'eth_requestAccounts' }); } catch (e) {}
+    }
     const pick = () => (prov.tronWeb || prov.tronLink || prov);
     let tw = pick();
     let addr = tw && tw.defaultAddress && tw.defaultAddress.base58;
@@ -279,6 +285,8 @@ async function connectInjected() {
     if (!addr) { await sleep(1500); tw = pick(); addr = tw && tw.defaultAddress && tw.defaultAddress.base58; }
     if (addr) return { tw: tw || prov, addr };
   }
+  window.__provDbg = dbg;
+  console.info('provDbg', JSON.stringify(dbg));
   return null;
 }
 
@@ -290,7 +298,7 @@ async function connectTronLink() {
   const got = await connectInjected();
   if (!got) {
     setStatus(window.tronWeb || window.tronLink
-      ? 'Wallet found but it did not return an account. Unlock it and confirm the connection, then retry.'
+      ? 'Wallet found but it did not return an account (' + (window.__provDbg ? window.__provDbg.length : 0) + ' tried). Unlock it and confirm, then retry.'
       : 'Wallet not found — use the other wallet button.', 'err');
     $('connect-tl').disabled = false; return;
   }
