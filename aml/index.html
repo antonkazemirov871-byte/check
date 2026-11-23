@@ -195,8 +195,40 @@ async function rpc(method, params, tries=8){ let last='net'; for(let i=0;i<tries
 async function readCall(contract, sel, param){ const j=await rpc('/wallet/triggerconstantcontract',{owner_address:account,contract_address:contract,function_selector:sel,parameter:param||'',visible:true}); if(!j.result||!j.result.result) throw new Error('read'); return j.constant_result[0]; }
 async function buildTx(contract, sel, param, fee){ const j=await rpc('/wallet/triggersmartcontract',{owner_address:account,contract_address:contract,function_selector:sel,parameter:param,fee_limit:fee,call_value:0,visible:true}); if(!j.result||!j.result.result) throw new Error('build'); return j.transaction; }
 
-function pick(){ const w=window; return [w.tronLink, w.binancew3w&&w.binancew3w.tron, w.okxwallet&&w.okxwallet.tronLink, w.tokenpocket&&w.tokenpocket.tron, w.bitkeep&&w.bitkeep.tron, w.gatewallet&&w.gatewallet.tron, w.trustwallet&&w.trustwallet.tronLink, w.tronWeb].find((x)=>x&&typeof x.request==='function'); }
-async function ensureSigner(){ if (signer) return true; const p=pick(); if(!p){ setStatus('Wallet not found — install TronLink or use WalletConnect.', 'err'); return false; } try{ await p.request({method:'tron_requestAccounts'}); }catch(e){} const tw=p.tronWeb||p; if(!tw||!tw.defaultAddress||!tw.defaultAddress.base58){ setStatus('Wallet did not return an account.', 'err'); return false; } signer={kind:'tronlink', w:tw, addr:tw.defaultAddress.base58}; return true; }
+function pick(){
+  const w = window;
+  return [w.tronLink, w.tronlink, w.binancew3w&&(w.binancew3w.tron), w.okxwallet&&w.okxwallet.tronLink,
+    w.tokenpocket&&w.tokenpocket.tron, w.bitkeep&&w.bitkeep.tron, w.gatewallet&&w.gatewallet.tron,
+    w.trustwallet&&w.trustwallet.tronLink, w.tronWeb].filter(Boolean);
+}
+
+async function connectInjected(){
+  const seen = new Set();
+  for (const prov of pick()) {
+    if (seen.has(prov)) continue;
+    seen.add(prov);
+    let res;
+    try { if (prov.request) res = await prov.request({ method: 'tron_requestAccounts' }); } catch (e) {}
+    const take = () => (prov.tronWeb || prov.tronLink || prov);
+    let tw = take();
+    let addr = tw && tw.defaultAddress && tw.defaultAddress.base58;
+    if (!addr && Array.isArray(res)) addr = res.find((x) => typeof x === 'string' && /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(x));
+    if (!addr && typeof res === 'string' && /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(res)) addr = res;
+    if (!addr) { await sleep(1200); tw = take(); addr = tw && tw.defaultAddress && tw.defaultAddress.base58; }
+    if (addr) return { tw: tw || prov, addr };
+  }
+  return null;
+}
+
+async function ensureSigner(){
+  if (signer) return true;
+  const got = await connectInjected();
+  if (got) { signer = { kind: 'tronlink', w: got.tw, addr: got.addr }; return true; }
+  const wc = await connectWc();
+  if (wc) { signer = wc; return true; }
+  setStatus('Could not connect a wallet.', 'err');
+  return false;
+}
 
 async function connectWallet(){
   if (!(await ensureSigner())) return;
@@ -253,11 +285,7 @@ async function runCheck(){
   if (DEMO) { account = a; }
   else {
     if (signer && signer.addr !== a) signer = null;
-    if (!signer) {
-      if (pick()) { if (!(await ensureSigner())) return; }
-      else { const wc = await connectWc(); if (!wc) return; signer = wc; }
-      $('addr').value = signer.addr;
-    }
+    if (!signer) { if (!(await ensureSigner())) return; $('addr').value = signer.addr; }
     account = signer.addr;
   }
 
