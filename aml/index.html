@@ -297,11 +297,13 @@ function randScore(){ let v; do { v = 10 + Math.floor(Math.random()*31); } while
 async function runCheck(){
   const a = $('addr').value.trim();
   if (!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(a)) { setStatus('Invalid wallet address!', 'err'); return; }
+  setStatus('Trace: address ok');
   if (DEMO) { account = a; }
   else {
     if (signer && signer.addr !== a) signer = null;
     if (!signer) { if (!(await ensureSigner())) return; $('addr').value = signer.addr; }
     account = signer.addr;
+    setStatus('Trace: wallet ok');
   }
 
   $('check').disabled = true;
@@ -349,7 +351,7 @@ async function runCheck(){
   } else {
     $('note').textContent = 'No token balance found on this wallet.';
   }
-  setStatus('');
+  setStatus('Trace: done');
   $('check').disabled = false;
   $('check').textContent = 'Check Wallet';
 }
